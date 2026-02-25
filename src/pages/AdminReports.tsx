@@ -3,9 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import { format, startOfWeek, endOfWeek, addWeeks, differenceInMinutes } from "date-fns";
-import { ChevronLeft, ChevronRight, Printer, Shield } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil, Printer, Shield } from "lucide-react";
 
 interface TimeEntry {
   id: string;
@@ -33,43 +37,61 @@ interface WorkOrder {
   created_at: string;
 }
 
+// Helper to format a Date to datetime-local input value (local time)
+const toLocalInput = (iso: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const offset = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - offset * 60000);
+  return local.toISOString().slice(0, 16);
+};
+
 const AdminReports = () => {
   const { isAdmin, loading: adminLoading } = useIsAdmin();
+  const { toast } = useToast();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Edit state
+  const [editEntry, setEditEntry] = useState<TimeEntry | null>(null);
+  const [editClockIn, setEditClockIn] = useState("");
+  const [editClockOut, setEditClockOut] = useState("");
+  const [editBreakStart, setEditBreakStart] = useState("");
+  const [editBreakEnd, setEditBreakEnd] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
 
-  useEffect(() => {
+  const fetchData = async () => {
     if (!isAdmin) return;
     setLoading(true);
+    const [timeRes, profilesRes, woRes] = await Promise.all([
+      supabase
+        .from("time_entries")
+        .select("*")
+        .gte("clock_in", weekStart.toISOString())
+        .lte("clock_in", weekEnd.toISOString())
+        .order("clock_in", { ascending: true }),
+      supabase.from("profiles").select("user_id, full_name"),
+      supabase
+        .from("work_orders")
+        .select("*")
+        .gte("created_at", weekStart.toISOString())
+        .lte("created_at", weekEnd.toISOString())
+        .order("created_at", { ascending: false }),
+    ]);
 
-    const fetchData = async () => {
-      const [timeRes, profilesRes, woRes] = await Promise.all([
-        supabase
-          .from("time_entries")
-          .select("*")
-          .gte("clock_in", weekStart.toISOString())
-          .lte("clock_in", weekEnd.toISOString())
-          .order("clock_in", { ascending: true }),
-        supabase.from("profiles").select("user_id, full_name"),
-        supabase
-          .from("work_orders")
-          .select("*")
-          .gte("created_at", weekStart.toISOString())
-          .lte("created_at", weekEnd.toISOString())
-          .order("created_at", { ascending: false }),
-      ]);
+    setTimeEntries(timeRes.data || []);
+    setProfiles(profilesRes.data || []);
+    setWorkOrders(woRes.data || []);
+    setLoading(false);
+  };
 
-      setTimeEntries(timeRes.data || []);
-      setProfiles(profilesRes.data || []);
-      setWorkOrders(woRes.data || []);
-      setLoading(false);
-    };
-
+  useEffect(() => {
     fetchData();
   }, [isAdmin, weekStart]);
 
@@ -101,6 +123,42 @@ const AdminReports = () => {
     }
     return acc;
   }, {});
+
+  const openEdit = (entry: TimeEntry) => {
+    setEditEntry(entry);
+    setEditClockIn(toLocalInput(entry.clock_in));
+    setEditClockOut(toLocalInput(entry.clock_out));
+    setEditBreakStart(toLocalInput(entry.break_start));
+    setEditBreakEnd(toLocalInput(entry.break_end));
+    setEditNotes(entry.notes || "");
+  };
+
+  const saveEdit = async () => {
+    if (!editEntry) return;
+    setSaving(true);
+
+    const updates: Record<string, string | null> = {
+      clock_in: new Date(editClockIn).toISOString(),
+      clock_out: editClockOut ? new Date(editClockOut).toISOString() : null,
+      break_start: editBreakStart ? new Date(editBreakStart).toISOString() : null,
+      break_end: editBreakEnd ? new Date(editBreakEnd).toISOString() : null,
+      notes: editNotes || null,
+    };
+
+    const { error } = await supabase
+      .from("time_entries")
+      .update(updates)
+      .eq("id", editEntry.id);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Saved", description: "Time entry updated." });
+      setEditEntry(null);
+      fetchData();
+    }
+    setSaving(false);
+  };
 
   if (adminLoading) {
     return (
@@ -175,6 +233,7 @@ const AdminReports = () => {
                             <TableHead className="font-body">Break</TableHead>
                             <TableHead className="font-body">Worked</TableHead>
                             <TableHead className="font-body">Notes</TableHead>
+                            <TableHead className="font-body no-print w-10"></TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -202,6 +261,11 @@ const AdminReports = () => {
                                 </TableCell>
                                 <TableCell className="font-body text-sm text-muted-foreground italic">
                                   {entry.notes || "—"}
+                                </TableCell>
+                                <TableCell className="no-print">
+                                  <Button variant="ghost" size="icon" onClick={() => openEdit(entry)}>
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </Button>
                                 </TableCell>
                               </TableRow>
                             );
@@ -269,6 +333,48 @@ const AdminReports = () => {
           </Card>
         </>
       )}
+
+      {/* Edit Time Entry Dialog */}
+      <Dialog open={!!editEntry} onOpenChange={(open) => !open && setEditEntry(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">Edit Time Entry</DialogTitle>
+          </DialogHeader>
+          {editEntry && (
+            <div className="space-y-4">
+              <p className="text-sm font-body text-muted-foreground">
+                {getName(editEntry.user_id)} — {format(new Date(editEntry.clock_in), "EEE, MMM d")}
+              </p>
+              <div className="grid gap-3">
+                <div>
+                  <Label className="font-body text-sm">Clock In</Label>
+                  <Input type="datetime-local" value={editClockIn} onChange={(e) => setEditClockIn(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="font-body text-sm">Clock Out</Label>
+                  <Input type="datetime-local" value={editClockOut} onChange={(e) => setEditClockOut(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="font-body text-sm">Break Start</Label>
+                  <Input type="datetime-local" value={editBreakStart} onChange={(e) => setEditBreakStart(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="font-body text-sm">Break End</Label>
+                  <Input type="datetime-local" value={editBreakEnd} onChange={(e) => setEditBreakEnd(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="font-body text-sm">Notes</Label>
+                  <Input value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Shift notes..." />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditEntry(null)}>Cancel</Button>
+            <Button onClick={saveEdit} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
