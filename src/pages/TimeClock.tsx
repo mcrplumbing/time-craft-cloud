@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { format, differenceInMinutes } from "date-fns";
 import { Clock, PlayCircle, StopCircle } from "lucide-react";
+import { queueAction, isOnline } from "@/lib/offlineQueue";
 
 const TimeClock = () => {
   const { user } = useAuth();
@@ -52,12 +53,21 @@ const TimeClock = () => {
   const clockIn = async () => {
     if (!user) return;
     setLoading(true);
-    const { error } = await supabase.from("time_entries").insert({ user_id: user.id });
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (!isOnline()) {
+      await queueAction({
+        table: "time_entries",
+        type: "insert",
+        data: { user_id: user.id, clock_in: new Date().toISOString() },
+      });
+      toast({ title: "Clocked In (Offline)", description: "Will sync when you're back online." });
     } else {
-      toast({ title: "Clocked In!", description: "Your time is now being tracked." });
-      fetchEntries();
+      const { error } = await supabase.from("time_entries").insert({ user_id: user.id });
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Clocked In!", description: "Your time is now being tracked." });
+        fetchEntries();
+      }
     }
     setLoading(false);
   };
@@ -65,16 +75,26 @@ const TimeClock = () => {
   const clockOut = async () => {
     if (!user || !activeEntry) return;
     setLoading(true);
-    const { error } = await supabase
-      .from("time_entries")
-      .update({ clock_out: new Date().toISOString(), notes })
-      .eq("id", activeEntry.id);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Clocked Out!", description: "Time entry saved." });
+    if (!isOnline()) {
+      await queueAction({
+        table: "time_entries",
+        type: "update",
+        data: { id: activeEntry.id, clock_out: new Date().toISOString(), notes },
+      });
+      toast({ title: "Clocked Out (Offline)", description: "Will sync when you're back online." });
       setNotes("");
-      fetchEntries();
+    } else {
+      const { error } = await supabase
+        .from("time_entries")
+        .update({ clock_out: new Date().toISOString(), notes })
+        .eq("id", activeEntry.id);
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Clocked Out!", description: "Time entry saved." });
+        setNotes("");
+        fetchEntries();
+      }
     }
     setLoading(false);
   };
