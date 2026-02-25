@@ -17,7 +17,7 @@ const WorkOrders = () => {
   const { toast } = useToast();
   const [orders, setOrders] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", customer_name: "", customer_address: "", description: "" });
+  const [form, setForm] = useState({ title: "", customer_name: "", customer_address: "", description: "", job_number: "" });
   const [loading, setLoading] = useState(false);
 
   const fetchOrders = async () => {
@@ -36,15 +36,34 @@ const WorkOrders = () => {
     e.preventDefault();
     if (!user) return;
     setLoading(true);
+
+    // Determine sub-number: check how many WOs already have this base job number
+    const baseJob = form.job_number.trim();
+    let finalJobNumber = baseJob;
+    if (baseJob) {
+      const { data: existing } = await supabase
+        .from("work_orders")
+        .select("job_number")
+        .eq("user_id", user.id)
+        .or(`job_number.eq.${baseJob},job_number.like.${baseJob}.%`);
+      if (existing && existing.length > 0) {
+        finalJobNumber = `${baseJob}.${existing.length}`;
+      }
+    }
+
     const { error } = await supabase.from("work_orders").insert({
       user_id: user.id,
-      ...form,
+      title: form.title,
+      customer_name: form.customer_name,
+      customer_address: form.customer_address,
+      description: form.description,
+      job_number: finalJobNumber,
     });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Work Order Created" });
-      setForm({ title: "", customer_name: "", customer_address: "", description: "" });
+      setForm({ title: "", customer_name: "", customer_address: "", description: "", job_number: "" });
       setOpen(false);
       fetchOrders();
     }
@@ -76,6 +95,11 @@ const WorkOrders = () => {
               <DialogTitle className="font-display">New Work Order</DialogTitle>
             </DialogHeader>
             <form onSubmit={createOrder} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Job Number</Label>
+                <Input value={form.job_number} onChange={(e) => setForm({ ...form, job_number: e.target.value })} placeholder="e.g. 25546" required />
+                <p className="text-xs text-muted-foreground font-body">If this job number already exists, a sub-number (.1, .2, etc.) will be added automatically.</p>
+              </div>
               <div className="space-y-2">
                 <Label>Title</Label>
                 <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Job title" required />
@@ -114,7 +138,7 @@ const WorkOrders = () => {
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="flex items-center justify-between py-4">
                   <div>
-                    <p className="font-body font-semibold">#{order.order_number} — {order.title || "Untitled"}</p>
+                    <p className="font-body font-semibold">#{order.job_number || order.order_number} — {order.title || "Untitled"}</p>
                     <p className="text-sm text-muted-foreground font-body">{order.customer_name}</p>
                     <p className="text-xs text-muted-foreground font-body">{format(new Date(order.created_at), "MMM d, yyyy")}</p>
                   </div>
