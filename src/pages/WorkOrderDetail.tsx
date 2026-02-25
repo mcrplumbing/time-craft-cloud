@@ -56,26 +56,28 @@ const WorkOrderDetail = () => {
       {/* Order info */}
       <Card>
         <CardContent className="py-4 space-y-2">
-          <div className="flex justify-between items-start">
-            <div>
+          <div className="flex flex-col gap-3">
+            <div className="flex justify-between items-start">
               <p className="font-display font-bold text-lg">{order.title || "Untitled"}</p>
+              <div className="no-print shrink-0">
+                <Select value={order.status} onValueChange={updateStatus}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="invoiced">Invoiced</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
               <p className="text-sm font-body text-muted-foreground">{order.customer_name}</p>
               {order.customer_address && <p className="text-sm font-body text-muted-foreground">{order.customer_address}</p>}
               {order.description && <p className="text-sm font-body mt-2 whitespace-pre-line">{order.description}</p>}
               <p className="text-xs text-muted-foreground font-body mt-2">Created: {format(new Date(order.created_at), "MMM d, yyyy")}</p>
-            </div>
-            <div className="no-print">
-              <Select value={order.status} onValueChange={updateStatus}>
-                <SelectTrigger className="w-36">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="invoiced">Invoiced</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </CardContent>
