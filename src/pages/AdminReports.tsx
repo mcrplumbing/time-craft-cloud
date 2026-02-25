@@ -13,6 +13,8 @@ interface TimeEntry {
   clock_in: string;
   clock_out: string | null;
   notes: string | null;
+  break_start: string | null;
+  break_end: string | null;
 }
 
 interface Profile {
@@ -82,12 +84,20 @@ const AdminReports = () => {
     return `${h}h ${m}m`;
   };
 
+  const getBreakMins = (entry: TimeEntry) => {
+    if (entry.break_start && entry.break_end) {
+      return differenceInMinutes(new Date(entry.break_end), new Date(entry.break_start));
+    }
+    return 0;
+  };
+
   // Group time entries by user
   const userTimeMap = timeEntries.reduce<Record<string, { entries: TimeEntry[]; totalMins: number }>>((acc, entry) => {
     if (!acc[entry.user_id]) acc[entry.user_id] = { entries: [], totalMins: 0 };
     acc[entry.user_id].entries.push(entry);
     if (entry.clock_out) {
-      acc[entry.user_id].totalMins += differenceInMinutes(new Date(entry.clock_out), new Date(entry.clock_in));
+      const worked = differenceInMinutes(new Date(entry.clock_out), new Date(entry.clock_in)) - getBreakMins(entry);
+      acc[entry.user_id].totalMins += worked;
     }
     return acc;
   }, {});
@@ -162,32 +172,40 @@ const AdminReports = () => {
                             <TableHead className="font-body">Date</TableHead>
                             <TableHead className="font-body">Clock In</TableHead>
                             <TableHead className="font-body">Clock Out</TableHead>
-                            <TableHead className="font-body">Duration</TableHead>
+                            <TableHead className="font-body">Break</TableHead>
+                            <TableHead className="font-body">Worked</TableHead>
                             <TableHead className="font-body">Notes</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {entries.map((entry) => (
-                            <TableRow key={entry.id}>
-                              <TableCell className="font-body text-sm">
-                                {format(new Date(entry.clock_in), "EEE, MMM d")}
-                              </TableCell>
-                              <TableCell className="font-body text-sm">
-                                {format(new Date(entry.clock_in), "h:mm a")}
-                              </TableCell>
-                              <TableCell className="font-body text-sm">
-                                {entry.clock_out ? format(new Date(entry.clock_out), "h:mm a") : "Active"}
-                              </TableCell>
-                              <TableCell className="font-body text-sm font-semibold">
-                                {entry.clock_out
-                                  ? formatDuration(differenceInMinutes(new Date(entry.clock_out), new Date(entry.clock_in)))
-                                  : "—"}
-                              </TableCell>
-                              <TableCell className="font-body text-sm text-muted-foreground italic">
-                                {entry.notes || "—"}
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                          {entries.map((entry) => {
+                            const breakMins = getBreakMins(entry);
+                            const totalMins = entry.clock_out
+                              ? differenceInMinutes(new Date(entry.clock_out), new Date(entry.clock_in)) - breakMins
+                              : 0;
+                            return (
+                              <TableRow key={entry.id}>
+                                <TableCell className="font-body text-sm">
+                                  {format(new Date(entry.clock_in), "EEE, MMM d")}
+                                </TableCell>
+                                <TableCell className="font-body text-sm">
+                                  {format(new Date(entry.clock_in), "h:mm a")}
+                                </TableCell>
+                                <TableCell className="font-body text-sm">
+                                  {entry.clock_out ? format(new Date(entry.clock_out), "h:mm a") : "Active"}
+                                </TableCell>
+                                <TableCell className="font-body text-sm text-warning">
+                                  {breakMins > 0 ? `${breakMins}m` : "—"}
+                                </TableCell>
+                                <TableCell className="font-body text-sm font-semibold">
+                                  {entry.clock_out ? formatDuration(totalMins) : "—"}
+                                </TableCell>
+                                <TableCell className="font-body text-sm text-muted-foreground italic">
+                                  {entry.notes || "—"}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </div>
