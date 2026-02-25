@@ -13,7 +13,7 @@ import { Link } from "react-router-dom";
 import { Plus, FileText, Pencil, Trash2 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { queueAction, isOnline } from "@/lib/offlineQueue";
@@ -29,6 +29,7 @@ const WorkOrders = () => {
   const [form, setForm] = useState({ title: "", customer_name: "", customer_address: "", description: "", job_number: "" });
   const [editForm, setEditForm] = useState({ title: "", customer_name: "", customer_address: "", description: "", job_number: "" });
   const [loading, setLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string | number } | null>(null);
 
   const fetchOrders = async () => {
     if (!user) return;
@@ -141,14 +142,22 @@ const WorkOrders = () => {
     setLoading(false);
   };
 
-  const deleteOrder = async (orderId: string, e: React.MouseEvent) => {
+  const openDeleteDialog = (order: any, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setDeleteTarget({
+      id: order.id,
+      label: order.job_number || order.order_number,
+    });
+  };
+
+  const deleteOrder = async (orderId: string) => {
     const { error } = await supabase.from("work_orders").delete().eq("id", orderId);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Work Order Deleted" });
+      setDeleteTarget(null);
       fetchOrders();
     }
   };
@@ -241,6 +250,32 @@ const WorkOrders = () => {
         </DialogContent>
       </Dialog>
 
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(openState) => {
+          if (!openState) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Work Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete work order #{deleteTarget?.label}. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteTarget) deleteOrder(deleteTarget.id);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {orders.length === 0 ? (
         <Card>
           <CardContent className="py-12 flex flex-col items-center gap-3">
@@ -269,32 +304,15 @@ const WorkOrders = () => {
                       <Pencil className="h-4 w-4" />
                     </Button>
                     {isAdmin && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => e.preventDefault()}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Work Order</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will permanently delete work order #{order.job_number || order.order_number}. This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={(e) => deleteOrder(order.id, e)}>
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => openDeleteDialog(order, e)}
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        aria-label={`Delete work order ${order.job_number || order.order_number}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     )}
                     <span className={`text-xs font-body px-2 py-1 rounded-full ${statusStyle(order.status)}`}>
                       {order.status.replace("_", " ")}
