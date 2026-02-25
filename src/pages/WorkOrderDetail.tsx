@@ -25,9 +25,9 @@ const WorkOrderDetail = () => {
   const fetchAll = async () => {
     if (!id || !user) return;
     const [orderRes, timeRes, matRes] = await Promise.all([
-      supabase.from("work_orders").select("*").eq("id", id).eq("user_id", user.id).maybeSingle(),
-      supabase.from("work_order_time").select("*").eq("work_order_id", id).eq("user_id", user.id).order("date", { ascending: false }),
-      supabase.from("work_order_materials").select("*").eq("work_order_id", id).eq("user_id", user.id),
+      supabase.from("work_orders").select("*").eq("id", id).maybeSingle(),
+      supabase.from("work_order_time").select("*").eq("work_order_id", id).order("date", { ascending: false }),
+      supabase.from("work_order_materials").select("*").eq("work_order_id", id),
     ]);
     setOrder(orderRes.data);
     setTimeEntries(timeRes.data || []);
