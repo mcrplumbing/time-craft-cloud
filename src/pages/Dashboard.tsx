@@ -117,7 +117,7 @@ const Dashboard = () => {
                   className="flex items-center justify-between p-3 rounded-md hover:bg-muted transition-colors"
                 >
                   <div>
-                    <p className="font-body font-semibold text-sm">#{order.order_number} — {order.title || "Untitled"}</p>
+                    <p className="font-body font-semibold text-sm">#{order.job_number || order.order_number} — {order.title || "Untitled"}</p>
                     <p className="text-xs text-muted-foreground font-body">{order.customer_name}</p>
                   </div>
                   <span className={`text-xs font-body px-2 py-1 rounded-full ${

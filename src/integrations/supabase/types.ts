@@ -154,6 +154,7 @@ export type Database = {
           customer_name: string
           description: string | null
           id: string
+          job_number: string
           order_number: number
           status: string
           title: string
@@ -166,6 +167,7 @@ export type Database = {
           customer_name?: string
           description?: string | null
           id?: string
+          job_number?: string
           order_number?: number
           status?: string
           title?: string
@@ -178,6 +180,7 @@ export type Database = {
           customer_name?: string
           description?: string | null
           id?: string
+          job_number?: string
           order_number?: number
           status?: string
           title?: string

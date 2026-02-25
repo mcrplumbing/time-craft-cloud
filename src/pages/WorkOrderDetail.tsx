@@ -102,7 +102,7 @@ const WorkOrderDetail = () => {
         </Button>
         <div className="flex-1">
           <h1 className="text-xl md:text-2xl font-display font-bold">
-            Work Order #{order.order_number}
+            Work Order #{order.job_number || order.order_number}
           </h1>
         </div>
         <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2">
@@ -113,7 +113,7 @@ const WorkOrderDetail = () => {
       {/* Print header */}
       <div className="print-only mb-6">
         <h1 className="text-2xl font-bold font-display">MCR Plumbing Tracker</h1>
-        <h2 className="text-xl font-display">Work Order #{order.order_number}</h2>
+        <h2 className="text-xl font-display">Work Order #{order.job_number || order.order_number}</h2>
       </div>
 
       {/* Order info */}
