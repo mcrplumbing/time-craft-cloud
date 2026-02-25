@@ -20,7 +20,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
       <header className="no-print border-b bg-card shadow-sm">
         <div className="container flex items-center justify-between h-14 px-4">
           <Link to="/" className="font-display text-xl font-bold text-foreground">
-            Grampa's Workshop
+            MCR Plumbing Tracker
           </Link>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground hidden sm:inline font-body">

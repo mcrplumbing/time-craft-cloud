@@ -59,7 +59,7 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground font-body">Welcome back to the workshop.</p>
+        <p className="text-muted-foreground font-body">Welcome back.</p>
       </div>
 
       {/* Active clock */}

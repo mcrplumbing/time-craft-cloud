@@ -112,7 +112,7 @@ const WorkOrderDetail = () => {
 
       {/* Print header */}
       <div className="print-only mb-6">
-        <h1 className="text-2xl font-bold font-display">Grampa's Workshop</h1>
+        <h1 className="text-2xl font-bold font-display">MCR Plumbing Tracker</h1>
         <h2 className="text-xl font-display">Work Order #{order.order_number}</h2>
       </div>
 

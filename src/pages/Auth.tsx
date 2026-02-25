@@ -49,7 +49,7 @@ const Auth = () => {
           <div className="mx-auto w-full max-w-sm rounded-lg overflow-hidden shadow-lg mb-4">
             <img src={heroBarn} alt="Workshop workbench" className="w-full h-40 object-cover" />
           </div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Grampa's Workshop</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground">MCR Plumbing Tracker</h1>
           <p className="text-muted-foreground font-body">Time & Work Order Tracker</p>
         </div>
 
