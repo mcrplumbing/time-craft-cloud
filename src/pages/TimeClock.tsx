@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { format, differenceInMinutes } from "date-fns";
-import { Clock, PlayCircle, StopCircle } from "lucide-react";
+import { Clock, PlayCircle, StopCircle, Coffee } from "lucide-react";
 import { queueAction, isOnline } from "@/lib/offlineQueue";
 
 const TimeClock = () => {
@@ -40,7 +40,14 @@ const TimeClock = () => {
   useEffect(() => {
     if (!activeEntry) { setElapsed(""); return; }
     const tick = () => {
-      const mins = differenceInMinutes(new Date(), new Date(activeEntry.clock_in));
+      let mins = differenceInMinutes(new Date(), new Date(activeEntry.clock_in));
+      // Subtract break time if on break or break completed
+      if (activeEntry.break_start && activeEntry.break_end) {
+        mins -= differenceInMinutes(new Date(activeEntry.break_end), new Date(activeEntry.break_start));
+      } else if (activeEntry.break_start && !activeEntry.break_end) {
+        // Currently on break — freeze at break start
+        mins = differenceInMinutes(new Date(activeEntry.break_start), new Date(activeEntry.clock_in));
+      }
       const h = Math.floor(mins / 60);
       const m = mins % 60;
       setElapsed(`${h}h ${m}m`);
@@ -49,6 +56,9 @@ const TimeClock = () => {
     const interval = setInterval(tick, 30000);
     return () => clearInterval(interval);
   }, [activeEntry]);
+
+  const onBreak = activeEntry?.break_start && !activeEntry?.break_end;
+  const breakDone = activeEntry?.break_start && activeEntry?.break_end;
 
   const clockIn = async () => {
     if (!user) return;
@@ -99,12 +109,54 @@ const TimeClock = () => {
     setLoading(false);
   };
 
-  const formatDuration = (clockIn: string, clockOut: string | null) => {
+  const startBreak = async () => {
+    if (!user || !activeEntry) return;
+    setLoading(true);
+    const { error } = await supabase
+      .from("time_entries")
+      .update({ break_start: new Date().toISOString() })
+      .eq("id", activeEntry.id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Break Started", description: "Enjoy your break!" });
+      fetchEntries();
+    }
+    setLoading(false);
+  };
+
+  const endBreak = async () => {
+    if (!user || !activeEntry) return;
+    setLoading(true);
+    const { error } = await supabase
+      .from("time_entries")
+      .update({ break_end: new Date().toISOString() })
+      .eq("id", activeEntry.id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Break Ended", description: "Back to work!" });
+      fetchEntries();
+    }
+    setLoading(false);
+  };
+
+  const formatDuration = (clockIn: string, clockOut: string | null, breakStart?: string | null, breakEnd?: string | null) => {
     if (!clockOut) return "Active";
-    const mins = differenceInMinutes(new Date(clockOut), new Date(clockIn));
+    let mins = differenceInMinutes(new Date(clockOut), new Date(clockIn));
+    if (breakStart && breakEnd) {
+      mins -= differenceInMinutes(new Date(breakEnd), new Date(breakStart));
+    }
     const h = Math.floor(mins / 60);
     const m = mins % 60;
     return `${h}h ${m}m`;
+  };
+
+  const formatBreak = (breakStart?: string | null, breakEnd?: string | null) => {
+    if (!breakStart) return null;
+    if (!breakEnd) return "On break";
+    const mins = differenceInMinutes(new Date(breakEnd), new Date(breakStart));
+    return `${mins}m break`;
   };
 
   return (
@@ -112,14 +164,22 @@ const TimeClock = () => {
       <h1 className="text-2xl md:text-3xl font-display font-bold">Time Clock</h1>
 
       {/* Clock In/Out Card */}
-      <Card className={activeEntry ? "border-accent" : ""}>
+      <Card className={activeEntry ? (onBreak ? "border-warning" : "border-accent") : ""}>
         <CardContent className="py-8 flex flex-col items-center gap-4">
-          <Clock className={`h-16 w-16 ${activeEntry ? "text-accent animate-pulse-warm" : "text-muted-foreground"}`} />
+          {onBreak ? (
+            <Coffee className="h-16 w-16 text-warning animate-pulse-warm" />
+          ) : (
+            <Clock className={`h-16 w-16 ${activeEntry ? "text-accent animate-pulse-warm" : "text-muted-foreground"}`} />
+          )}
           {activeEntry ? (
             <>
-              <p className="text-3xl font-display font-bold text-accent">{elapsed}</p>
+              <p className={`text-3xl font-display font-bold ${onBreak ? "text-warning" : "text-accent"}`}>
+                {onBreak ? "On Break" : elapsed}
+              </p>
               <p className="text-sm text-muted-foreground font-body">
                 Clocked in at {format(new Date(activeEntry.clock_in), "h:mm a")}
+                {onBreak && ` • Break since ${format(new Date(activeEntry.break_start), "h:mm a")}`}
+                {breakDone && ` • Break: ${formatBreak(activeEntry.break_start, activeEntry.break_end)}`}
               </p>
               <Input
                 placeholder="Add notes about this shift..."
@@ -127,9 +187,23 @@ const TimeClock = () => {
                 onChange={(e) => setNotes(e.target.value)}
                 className="max-w-sm"
               />
-              <Button onClick={clockOut} disabled={loading} variant="destructive" size="lg" className="gap-2">
-                <StopCircle className="h-5 w-5" /> Clock Out
-              </Button>
+              <div className="flex gap-3 flex-wrap justify-center">
+                {!onBreak && !breakDone && (
+                  <Button onClick={startBreak} disabled={loading} variant="outline" size="lg" className="gap-2">
+                    <Coffee className="h-5 w-5" /> Start Break
+                  </Button>
+                )}
+                {onBreak && (
+                  <Button onClick={endBreak} disabled={loading} variant="outline" size="lg" className="gap-2 border-warning text-warning hover:bg-warning/10">
+                    <Coffee className="h-5 w-5" /> End Break
+                  </Button>
+                )}
+                {!onBreak && (
+                  <Button onClick={clockOut} disabled={loading} variant="destructive" size="lg" className="gap-2">
+                    <StopCircle className="h-5 w-5" /> Clock Out
+                  </Button>
+                )}
+              </div>
             </>
           ) : (
             <>
@@ -161,10 +235,15 @@ const TimeClock = () => {
                     <p className="text-xs text-muted-foreground font-body">
                       {format(new Date(entry.clock_in), "h:mm a")} — {entry.clock_out ? format(new Date(entry.clock_out), "h:mm a") : "Active"}
                     </p>
+                    {entry.break_start && (
+                      <p className="text-xs text-warning font-body mt-0.5">
+                        ☕ {formatBreak(entry.break_start, entry.break_end)}
+                      </p>
+                    )}
                     {entry.notes && <p className="text-xs text-muted-foreground mt-1 italic font-body">{entry.notes}</p>}
                   </div>
                   <span className={`text-sm font-body font-semibold ${!entry.clock_out ? "text-accent" : "text-foreground"}`}>
-                    {formatDuration(entry.clock_in, entry.clock_out)}
+                    {formatDuration(entry.clock_in, entry.clock_out, entry.break_start, entry.break_end)}
                   </span>
                 </div>
               ))}

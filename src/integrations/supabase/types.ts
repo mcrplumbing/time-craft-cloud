@@ -40,6 +40,8 @@ export type Database = {
       }
       time_entries: {
         Row: {
+          break_end: string | null
+          break_start: string | null
           clock_in: string
           clock_out: string | null
           created_at: string
@@ -49,6 +51,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          break_end?: string | null
+          break_start?: string | null
           clock_in?: string
           clock_out?: string | null
           created_at?: string
@@ -58,6 +62,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          break_end?: string | null
+          break_start?: string | null
           clock_in?: string
           clock_out?: string | null
           created_at?: string
