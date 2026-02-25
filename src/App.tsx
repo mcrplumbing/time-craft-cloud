@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import TimeClock from "@/pages/TimeClock";
 import WorkOrders from "@/pages/WorkOrders";
 import WorkOrderDetail from "@/pages/WorkOrderDetail";
+import AdminReports from "@/pages/AdminReports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const ProtectedRoutes = () => {
         <Route path="/time-clock" element={<TimeClock />} />
         <Route path="/work-orders" element={<WorkOrders />} />
         <Route path="/work-orders/:id" element={<WorkOrderDetail />} />
+        <Route path="/admin" element={<AdminReports />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
