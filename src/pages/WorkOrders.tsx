@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { Plus, FileText } from "lucide-react";
 import { format } from "date-fns";
+import { queueAction, isOnline } from "@/lib/offlineQueue";
 
 const WorkOrders = () => {
   const { user } = useAuth();
@@ -51,21 +52,40 @@ const WorkOrders = () => {
       }
     }
 
-    const { error } = await supabase.from("work_orders").insert({
-      user_id: user.id,
-      title: form.title,
-      customer_name: form.customer_name,
-      customer_address: form.customer_address,
-      description: form.description,
-      job_number: finalJobNumber,
-    });
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Work Order Created" });
+    if (!isOnline()) {
+      // Queue for later sync
+      await queueAction({
+        table: "work_orders",
+        type: "insert",
+        data: {
+          user_id: user.id,
+          title: form.title,
+          customer_name: form.customer_name,
+          customer_address: form.customer_address,
+          description: form.description,
+          job_number: finalJobNumber,
+        },
+      });
+      toast({ title: "Work Order Saved Offline", description: "Will sync when you're back online." });
       setForm({ title: "", customer_name: "", customer_address: "", description: "", job_number: "" });
       setOpen(false);
-      fetchOrders();
+    } else {
+      const { error } = await supabase.from("work_orders").insert({
+        user_id: user.id,
+        title: form.title,
+        customer_name: form.customer_name,
+        customer_address: form.customer_address,
+        description: form.description,
+        job_number: finalJobNumber,
+      });
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Work Order Created" });
+        setForm({ title: "", customer_name: "", customer_address: "", description: "", job_number: "" });
+        setOpen(false);
+        fetchOrders();
+      }
     }
     setLoading(false);
   };
