@@ -61,7 +61,7 @@ const WorkOrderDetail = () => {
               <p className="font-display font-bold text-lg">{order.title || "Untitled"}</p>
               <p className="text-sm font-body text-muted-foreground">{order.customer_name}</p>
               {order.customer_address && <p className="text-sm font-body text-muted-foreground">{order.customer_address}</p>}
-              {order.description && <p className="text-sm font-body mt-2">{order.description}</p>}
+              {order.description && <p className="text-sm font-body mt-2 whitespace-pre-line">{order.description}</p>}
               <p className="text-xs text-muted-foreground font-body mt-2">Created: {format(new Date(order.created_at), "MMM d, yyyy")}</p>
             </div>
             <div className="no-print">
