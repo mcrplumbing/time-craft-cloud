@@ -10,7 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
-import { Plus, FileText, Pencil } from "lucide-react";
+import { Plus, FileText, Pencil, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { queueAction, isOnline } from "@/lib/offlineQueue";
 
@@ -137,6 +141,18 @@ const WorkOrders = () => {
     setLoading(false);
   };
 
+  const deleteOrder = async (orderId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const { error } = await supabase.from("work_orders").delete().eq("id", orderId);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Work Order Deleted" });
+      fetchOrders();
+    }
+  };
+
   const statusStyle = (status: string) => {
     switch (status) {
       case "completed":
@@ -252,6 +268,34 @@ const WorkOrders = () => {
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
+                    {isAdmin && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => e.preventDefault()}
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Work Order</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete work order #{order.job_number || order.order_number}. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={(e) => deleteOrder(order.id, e)}>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                     <span className={`text-xs font-body px-2 py-1 rounded-full ${statusStyle(order.status)}`}>
                       {order.status.replace("_", " ")}
                     </span>
