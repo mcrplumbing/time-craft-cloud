@@ -1,22 +1,26 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { format, differenceInMinutes } from "date-fns";
-import { Clock, PlayCircle, StopCircle, Coffee } from "lucide-react";
+import { Clock, PlayCircle, StopCircle, Coffee, Trash2 } from "lucide-react";
 import { queueAction, isOnline } from "@/lib/offlineQueue";
 
 const TimeClock = () => {
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const { toast } = useToast();
   const [activeEntry, setActiveEntry] = useState<any>(null);
   const [entries, setEntries] = useState<any[]>([]);
   const [notes, setNotes] = useState("");
   const [elapsed, setElapsed] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const fetchEntries = async () => {
     if (!user) return;
@@ -141,6 +145,18 @@ const TimeClock = () => {
     setLoading(false);
   };
 
+  const deleteEntry = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("time_entries").delete().eq("id", deleteTarget);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Deleted", description: "Time entry removed." });
+      fetchEntries();
+    }
+    setDeleteTarget(null);
+  };
+
   const formatDuration = (clockIn: string, clockOut: string | null, breakStart?: string | null, breakEnd?: string | null) => {
     if (!clockOut) return "Active";
     let mins = differenceInMinutes(new Date(clockOut), new Date(clockIn));
@@ -242,15 +258,36 @@ const TimeClock = () => {
                     )}
                     {entry.notes && <p className="text-xs text-muted-foreground mt-1 italic font-body">{entry.notes}</p>}
                   </div>
-                  <span className={`text-sm font-body font-semibold ${!entry.clock_out ? "text-accent" : "text-foreground"}`}>
-                    {formatDuration(entry.clock_in, entry.clock_out, entry.break_start, entry.break_end)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-body font-semibold ${!entry.clock_out ? "text-accent" : "text-foreground"}`}>
+                      {formatDuration(entry.clock_in, entry.clock_out, entry.break_start, entry.break_end)}
+                    </span>
+                    {isAdmin && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteTarget(entry.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Admin delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display">Delete Time Entry?</AlertDialogTitle>
+            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteEntry} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
