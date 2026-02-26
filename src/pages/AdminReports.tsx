@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfWeek, endOfWeek, addWeeks, differenceInMinutes } from "date-fns";
 import { ChevronLeft, ChevronRight, Pencil, Printer, Shield } from "lucide-react";
+import LocationBadge from "@/components/LocationBadge";
 
 interface TimeEntry {
   id: string;
@@ -19,6 +20,10 @@ interface TimeEntry {
   notes: string | null;
   break_start: string | null;
   break_end: string | null;
+  clock_in_lat: number | null;
+  clock_in_lng: number | null;
+  clock_out_lat: number | null;
+  clock_out_lng: number | null;
 }
 
 interface Profile {
@@ -233,6 +238,7 @@ const AdminReports = () => {
                             <TableHead className="font-body">Break</TableHead>
                             <TableHead className="font-body">Worked</TableHead>
                             <TableHead className="font-body">Notes</TableHead>
+                            <TableHead className="font-body no-print">Location</TableHead>
                             <TableHead className="font-body no-print w-10"></TableHead>
                           </TableRow>
                         </TableHeader>
@@ -261,6 +267,16 @@ const AdminReports = () => {
                                 </TableCell>
                                 <TableCell className="font-body text-sm text-muted-foreground italic">
                                   {entry.notes || "—"}
+                                </TableCell>
+                                <TableCell className="no-print">
+                                  <div className="flex gap-2">
+                                    {entry.clock_in_lat && entry.clock_in_lng && (
+                                      <LocationBadge label="In" lat={entry.clock_in_lat} lng={entry.clock_in_lng} />
+                                    )}
+                                    {entry.clock_out_lat && entry.clock_out_lng && (
+                                      <LocationBadge label="Out" lat={entry.clock_out_lat} lng={entry.clock_out_lng} />
+                                    )}
+                                  </div>
                                 </TableCell>
                                 <TableCell className="no-print">
                                   <Button variant="ghost" size="icon" onClick={() => openEdit(entry)}>
