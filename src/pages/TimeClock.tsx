@@ -10,6 +10,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { format, differenceInMinutes } from "date-fns";
 import { Clock, PlayCircle, StopCircle, Coffee, Trash2 } from "lucide-react";
 import { queueAction, isOnline } from "@/lib/offlineQueue";
+import { getCurrentPosition } from "@/lib/geolocation";
+import LocationBadge from "@/components/LocationBadge";
 
 const TimeClock = () => {
   const { user } = useAuth();
@@ -67,19 +69,27 @@ const TimeClock = () => {
   const clockIn = async () => {
     if (!user) return;
     setLoading(true);
+    const pos = await getCurrentPosition();
     if (!isOnline()) {
       await queueAction({
         table: "time_entries",
         type: "insert",
-        data: { user_id: user.id, clock_in: new Date().toISOString() },
+        data: {
+          user_id: user.id,
+          clock_in: new Date().toISOString(),
+          ...(pos && { clock_in_lat: pos.lat, clock_in_lng: pos.lng }),
+        },
       });
       toast({ title: "Clocked In (Offline)", description: "Will sync when you're back online." });
     } else {
-      const { error } = await supabase.from("time_entries").insert({ user_id: user.id });
+      const { error } = await supabase.from("time_entries").insert({
+        user_id: user.id,
+        ...(pos && { clock_in_lat: pos.lat, clock_in_lng: pos.lng }),
+      } as any);
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Clocked In!", description: "Your time is now being tracked." });
+        toast({ title: "Clocked In!", description: pos ? "Location recorded." : "Your time is now being tracked." });
         fetchEntries();
       }
     }
@@ -89,23 +99,25 @@ const TimeClock = () => {
   const clockOut = async () => {
     if (!user || !activeEntry) return;
     setLoading(true);
+    const pos = await getCurrentPosition();
+    const locationData = pos ? { clock_out_lat: pos.lat, clock_out_lng: pos.lng } : {};
     if (!isOnline()) {
       await queueAction({
         table: "time_entries",
         type: "update",
-        data: { id: activeEntry.id, clock_out: new Date().toISOString(), notes },
+        data: { id: activeEntry.id, clock_out: new Date().toISOString(), notes, ...locationData },
       });
       toast({ title: "Clocked Out (Offline)", description: "Will sync when you're back online." });
       setNotes("");
     } else {
       const { error } = await supabase
         .from("time_entries")
-        .update({ clock_out: new Date().toISOString(), notes })
+        .update({ clock_out: new Date().toISOString(), notes, ...locationData } as any)
         .eq("id", activeEntry.id);
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Clocked Out!", description: "Time entry saved." });
+        toast({ title: "Clocked Out!", description: pos ? "Location recorded." : "Time entry saved." });
         setNotes("");
         fetchEntries();
       }
@@ -257,6 +269,16 @@ const TimeClock = () => {
                       </p>
                     )}
                     {entry.notes && <p className="text-xs text-muted-foreground mt-1 italic font-body">{entry.notes}</p>}
+                    {(entry.clock_in_lat || entry.clock_out_lat) && (
+                      <div className="flex gap-3 mt-1">
+                        {entry.clock_in_lat && entry.clock_in_lng && (
+                          <LocationBadge label="Clock In" lat={entry.clock_in_lat} lng={entry.clock_in_lng} />
+                        )}
+                        {entry.clock_out_lat && entry.clock_out_lng && (
+                          <LocationBadge label="Clock Out" lat={entry.clock_out_lat} lng={entry.clock_out_lng} />
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-sm font-body font-semibold ${!entry.clock_out ? "text-accent" : "text-foreground"}`}>

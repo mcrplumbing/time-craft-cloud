@@ -43,7 +43,11 @@ export type Database = {
           break_end: string | null
           break_start: string | null
           clock_in: string
+          clock_in_lat: number | null
+          clock_in_lng: number | null
           clock_out: string | null
+          clock_out_lat: number | null
+          clock_out_lng: number | null
           created_at: string
           id: string
           notes: string | null
@@ -54,7 +58,11 @@ export type Database = {
           break_end?: string | null
           break_start?: string | null
           clock_in?: string
+          clock_in_lat?: number | null
+          clock_in_lng?: number | null
           clock_out?: string | null
+          clock_out_lat?: number | null
+          clock_out_lng?: number | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -65,7 +73,11 @@ export type Database = {
           break_end?: string | null
           break_start?: string | null
           clock_in?: string
+          clock_in_lat?: number | null
+          clock_in_lng?: number | null
           clock_out?: string | null
+          clock_out_lat?: number | null
+          clock_out_lng?: number | null
           created_at?: string
           id?: string
           notes?: string | null
