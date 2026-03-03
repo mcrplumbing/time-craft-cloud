@@ -78,7 +78,7 @@ const Auth = () => {
                 {loading ? "Please wait..." : isSignUp ? "Sign Up" : "Sign In"}
               </Button>
             </form>
-            <div className="mt-4 text-center">
+            <div className="mt-4 text-center space-y-2">
               <button
                 type="button"
                 onClick={() => setIsSignUp(!isSignUp)}
@@ -86,6 +86,30 @@ const Auth = () => {
               >
                 {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
               </button>
+              {!isSignUp && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!email) {
+                        toast({ title: "Enter your email first", description: "We need your email to send the reset link.", variant: "destructive" });
+                        return;
+                      }
+                      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                        redirectTo: `${window.location.origin}/reset-password`,
+                      });
+                      if (error) {
+                        toast({ title: "Error", description: error.message, variant: "destructive" });
+                      } else {
+                        toast({ title: "Check your email", description: "We sent you a password reset link." });
+                      }
+                    }}
+                    className="text-sm text-muted-foreground hover:text-accent hover:underline font-body"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

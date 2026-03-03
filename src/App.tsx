@@ -12,6 +12,7 @@ import TimeClock from "@/pages/TimeClock";
 import WorkOrders from "@/pages/WorkOrders";
 import WorkOrderDetail from "@/pages/WorkOrderDetail";
 import AdminReports from "@/pages/AdminReports";
+import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,7 +51,10 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BrowserRouter>
-          <ProtectedRoutes />
+          <Routes>
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="*" element={<ProtectedRoutes />} />
+          </Routes>
           <OfflineIndicator />
         </BrowserRouter>
       </AuthProvider>
