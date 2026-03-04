@@ -72,6 +72,18 @@ const AdminReports = () => {
   const [editNotes, setEditNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Roster state
+  interface RosterUser {
+    id: string;
+    email: string;
+    full_name: string;
+    role: string;
+    created_at: string;
+    last_sign_in_at: string | null;
+  }
+  const [rosterUsers, setRosterUsers] = useState<RosterUser[]>([]);
+  const [rosterLoading, setRosterLoading] = useState(false);
+
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
 
   const fetchData = async () => {
