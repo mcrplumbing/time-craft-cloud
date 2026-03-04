@@ -111,9 +111,27 @@ const AdminReports = () => {
     setLoading(false);
   };
 
+  const fetchRoster = async () => {
+    if (!isAdmin || !session?.access_token) return;
+    setRosterLoading(true);
+    try {
+      const res = await supabase.functions.invoke("list-users", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (res.data) setRosterUsers(res.data);
+    } catch (err) {
+      console.error("Failed to fetch roster", err);
+    }
+    setRosterLoading(false);
+  };
+
   useEffect(() => {
     fetchData();
   }, [isAdmin, weekStart]);
+
+  useEffect(() => {
+    fetchRoster();
+  }, [isAdmin, session]);
 
   const getName = (userId: string) => {
     const p = profiles.find((p) => p.user_id === userId);
