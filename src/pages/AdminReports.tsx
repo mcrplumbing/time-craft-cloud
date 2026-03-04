@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfWeek, endOfWeek, addWeeks, differenceInMinutes } from "date-fns";
-import { ChevronLeft, ChevronRight, Pencil, Printer, Shield } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil, Printer, Shield, Users } from "lucide-react";
 import LocationBadge from "@/components/LocationBadge";
 
 interface TimeEntry {
@@ -53,6 +55,7 @@ const toLocalInput = (iso: string | null) => {
 
 const AdminReports = () => {
   const { isAdmin, loading: adminLoading } = useIsAdmin();
+  const { session } = useAuth();
   const { toast } = useToast();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
@@ -68,6 +71,18 @@ const AdminReports = () => {
   const [editBreakEnd, setEditBreakEnd] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Roster state
+  interface RosterUser {
+    id: string;
+    email: string;
+    full_name: string;
+    role: string;
+    created_at: string;
+    last_sign_in_at: string | null;
+  }
+  const [rosterUsers, setRosterUsers] = useState<RosterUser[]>([]);
+  const [rosterLoading, setRosterLoading] = useState(false);
 
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
 
@@ -96,9 +111,27 @@ const AdminReports = () => {
     setLoading(false);
   };
 
+  const fetchRoster = async () => {
+    if (!isAdmin || !session?.access_token) return;
+    setRosterLoading(true);
+    try {
+      const res = await supabase.functions.invoke("list-users", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (res.data) setRosterUsers(res.data);
+    } catch (err) {
+      console.error("Failed to fetch roster", err);
+    }
+    setRosterLoading(false);
+  };
+
   useEffect(() => {
     fetchData();
   }, [isAdmin, weekStart]);
+
+  useEffect(() => {
+    fetchRoster();
+  }, [isAdmin, session]);
 
   const getName = (userId: string) => {
     const p = profiles.find((p) => p.user_id === userId);
@@ -349,6 +382,55 @@ const AdminReports = () => {
           </Card>
         </>
       )}
+
+      {/* Employee Roster */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-display text-lg flex items-center gap-2">
+            <Users className="h-5 w-5" /> Employee Roster
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {rosterLoading ? (
+            <p className="text-sm text-muted-foreground font-body animate-pulse">Loading roster...</p>
+          ) : rosterUsers.length === 0 ? (
+            <p className="text-sm text-muted-foreground font-body">No users found.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-body">Name</TableHead>
+                  <TableHead className="font-body">Email</TableHead>
+                  <TableHead className="font-body">Role</TableHead>
+                  <TableHead className="font-body">Joined</TableHead>
+                  <TableHead className="font-body">Last Sign In</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rosterUsers.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-body text-sm font-semibold">
+                      {u.full_name || "—"}
+                    </TableCell>
+                    <TableCell className="font-body text-sm">{u.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={u.role === "admin" ? "default" : "secondary"} className="font-body text-xs">
+                        {u.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-body text-sm text-muted-foreground">
+                      {format(new Date(u.created_at), "MMM d, yyyy")}
+                    </TableCell>
+                    <TableCell className="font-body text-sm text-muted-foreground">
+                      {u.last_sign_in_at ? format(new Date(u.last_sign_in_at), "MMM d, yyyy h:mm a") : "Never"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Edit Time Entry Dialog */}
       <Dialog open={!!editEntry} onOpenChange={(open) => !open && setEditEntry(null)}>
