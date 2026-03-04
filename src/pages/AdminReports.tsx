@@ -55,6 +55,7 @@ const toLocalInput = (iso: string | null) => {
 
 const AdminReports = () => {
   const { isAdmin, loading: adminLoading } = useIsAdmin();
+  const { session } = useAuth();
   const { toast } = useToast();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
