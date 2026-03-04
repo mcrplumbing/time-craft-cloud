@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfWeek, endOfWeek, addWeeks, differenceInMinutes } from "date-fns";
-import { ChevronLeft, ChevronRight, Pencil, Printer, Shield, Users } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChevronLeft, ChevronRight, KeyRound, Pencil, Printer, Shield, Users } from "lucide-react";
 import LocationBadge from "@/components/LocationBadge";
 
 interface TimeEntry {
@@ -83,6 +84,13 @@ const AdminReports = () => {
   }
   const [rosterUsers, setRosterUsers] = useState<RosterUser[]>([]);
   const [rosterLoading, setRosterLoading] = useState(false);
+
+  // Roster edit state
+  const [editingUser, setEditingUser] = useState<RosterUser | null>(null);
+  const [editUserName, setEditUserName] = useState("");
+  const [editUserRole, setEditUserRole] = useState("user");
+  const [savingUser, setSavingUser] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState<string | null>(null);
 
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
 
@@ -196,6 +204,59 @@ const AdminReports = () => {
       fetchData();
     }
     setSaving(false);
+  };
+
+  const openEditUser = (u: RosterUser) => {
+    setEditingUser(u);
+    setEditUserName(u.full_name || "");
+    setEditUserRole(u.role || "user");
+  };
+
+  const saveUserEdit = async () => {
+    if (!editingUser || !session?.access_token) return;
+    setSavingUser(true);
+
+    try {
+      // Update name
+      const nameRes = await supabase.functions.invoke("admin-user-actions", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { action: "update_profile", target_user_id: editingUser.id, full_name: editUserName },
+      });
+      if (nameRes.error) throw new Error(nameRes.error.message);
+
+      // Update role if changed
+      if (editUserRole !== editingUser.role) {
+        const roleRes = await supabase.functions.invoke("admin-user-actions", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: { action: "update_role", target_user_id: editingUser.id, role: editUserRole },
+        });
+        if (roleRes.error) throw new Error(roleRes.error.message);
+      }
+
+      toast({ title: "Saved", description: `Updated ${editUserName}.` });
+      setEditingUser(null);
+      fetchRoster();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setSavingUser(false);
+  };
+
+  const sendPasswordReset = async (userId: string) => {
+    if (!session?.access_token) return;
+    setResettingPassword(userId);
+    try {
+      const res = await supabase.functions.invoke("admin-user-actions", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { action: "send_password_reset", target_user_id: userId },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const email = res.data?.email || "";
+      toast({ title: "Reset email sent", description: `Password reset link sent to ${email}.` });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setResettingPassword(null);
   };
 
   if (adminLoading) {
@@ -404,6 +465,7 @@ const AdminReports = () => {
                   <TableHead className="font-body">Role</TableHead>
                   <TableHead className="font-body">Joined</TableHead>
                   <TableHead className="font-body">Last Sign In</TableHead>
+                  <TableHead className="font-body no-print w-24">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -423,6 +485,22 @@ const AdminReports = () => {
                     </TableCell>
                     <TableCell className="font-body text-sm text-muted-foreground">
                       {u.last_sign_in_at ? format(new Date(u.last_sign_in_at), "MMM d, yyyy h:mm a") : "Never"}
+                    </TableCell>
+                    <TableCell className="no-print">
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => openEditUser(u)} title="Edit user">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => sendPasswordReset(u.id)}
+                          disabled={resettingPassword === u.id}
+                          title="Send password reset"
+                        >
+                          <KeyRound className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -470,6 +548,42 @@ const AdminReports = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditEntry(null)}>Cancel</Button>
             <Button onClick={saveEdit} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">Edit Employee</DialogTitle>
+          </DialogHeader>
+          {editingUser && (
+            <div className="space-y-4">
+              <p className="text-sm font-body text-muted-foreground">{editingUser.email}</p>
+              <div className="grid gap-3">
+                <div>
+                  <Label className="font-body text-sm">Full Name</Label>
+                  <Input value={editUserName} onChange={(e) => setEditUserName(e.target.value)} placeholder="Employee name" />
+                </div>
+                <div>
+                  <Label className="font-body text-sm">Role</Label>
+                  <Select value={editUserRole} onValueChange={setEditUserRole}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingUser(null)}>Cancel</Button>
+            <Button onClick={saveUserEdit} disabled={savingUser}>{savingUser ? "Saving..." : "Save"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
