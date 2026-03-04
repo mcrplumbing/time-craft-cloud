@@ -383,6 +383,55 @@ const AdminReports = () => {
         </>
       )}
 
+      {/* Employee Roster */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-display text-lg flex items-center gap-2">
+            <Users className="h-5 w-5" /> Employee Roster
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {rosterLoading ? (
+            <p className="text-sm text-muted-foreground font-body animate-pulse">Loading roster...</p>
+          ) : rosterUsers.length === 0 ? (
+            <p className="text-sm text-muted-foreground font-body">No users found.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-body">Name</TableHead>
+                  <TableHead className="font-body">Email</TableHead>
+                  <TableHead className="font-body">Role</TableHead>
+                  <TableHead className="font-body">Joined</TableHead>
+                  <TableHead className="font-body">Last Sign In</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rosterUsers.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-body text-sm font-semibold">
+                      {u.full_name || "—"}
+                    </TableCell>
+                    <TableCell className="font-body text-sm">{u.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={u.role === "admin" ? "default" : "secondary"} className="font-body text-xs">
+                        {u.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-body text-sm text-muted-foreground">
+                      {format(new Date(u.created_at), "MMM d, yyyy")}
+                    </TableCell>
+                    <TableCell className="font-body text-sm text-muted-foreground">
+                      {u.last_sign_in_at ? format(new Date(u.last_sign_in_at), "MMM d, yyyy h:mm a") : "Never"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Edit Time Entry Dialog */}
       <Dialog open={!!editEntry} onOpenChange={(open) => !open && setEditEntry(null)}>
         <DialogContent className="sm:max-w-md">
