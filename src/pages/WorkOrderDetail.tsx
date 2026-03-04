@@ -17,7 +17,12 @@ const WorkOrderDetail = () => {
   const fetchAll = async () => {
     if (!id || !user) return;
     const orderRes = await supabase.from("work_orders").select("*").eq("id", id).maybeSingle();
-    setOrder(orderRes.data);
+    let createdByName = "";
+    if (orderRes.data?.user_id) {
+      const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", orderRes.data.user_id).maybeSingle();
+      createdByName = profile?.full_name || "";
+    }
+    setOrder({ ...orderRes.data, created_by_name: createdByName });
   };
 
   useEffect(() => { fetchAll(); }, [id, user]);
@@ -78,6 +83,7 @@ const WorkOrderDetail = () => {
               {order.customer_address && <p className="text-sm font-body text-muted-foreground">{order.customer_address}</p>}
               {order.description && <p className="text-sm font-body mt-2 whitespace-pre-line">{order.description}</p>}
               <p className="text-xs text-muted-foreground font-body mt-2">Created: {format(new Date(order.created_at), "MMM d, yyyy")}</p>
+              {order.created_by_name && <p className="text-xs text-muted-foreground font-body">Created by: {order.created_by_name}</p>}
             </div>
           </div>
         </CardContent>
