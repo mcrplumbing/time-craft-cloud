@@ -49,6 +49,7 @@ export type Database = {
           clock_out_lat: number | null
           clock_out_lng: number | null
           created_at: string
+          deleted_at: string | null
           id: string
           notes: string | null
           updated_at: string
@@ -64,6 +65,7 @@ export type Database = {
           clock_out_lat?: number | null
           clock_out_lng?: number | null
           created_at?: string
+          deleted_at?: string | null
           id?: string
           notes?: string | null
           updated_at?: string
@@ -79,6 +81,7 @@ export type Database = {
           clock_out_lat?: number | null
           clock_out_lng?: number | null
           created_at?: string
+          deleted_at?: string | null
           id?: string
           notes?: string | null
           updated_at?: string
@@ -191,6 +194,7 @@ export type Database = {
           created_at: string
           customer_address: string | null
           customer_name: string
+          deleted_at: string | null
           description: string | null
           id: string
           job_number: string
@@ -204,6 +208,7 @@ export type Database = {
           created_at?: string
           customer_address?: string | null
           customer_name?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           job_number?: string
@@ -217,6 +222,7 @@ export type Database = {
           created_at?: string
           customer_address?: string | null
           customer_name?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           job_number?: string
