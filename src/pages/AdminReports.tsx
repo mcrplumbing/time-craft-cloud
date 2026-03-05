@@ -317,7 +317,7 @@ const AdminReports = () => {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <Button variant="outline" size="sm" className="no-print gap-2" onClick={() => window.print()}>
+        <Button variant="outline" size="sm" className="no-print gap-2" onClick={() => { const prev = document.title; document.title = "Admin-Report.pdf"; window.print(); document.title = prev; }}>
           <Printer className="h-4 w-4" /> Print
         </Button>
       </div>
