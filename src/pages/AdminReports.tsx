@@ -74,6 +74,21 @@ const AdminReports = () => {
   const [editNotes, setEditNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Delete time entry state
+  const [deleteTimeEntryId, setDeleteTimeEntryId] = useState<string | null>(null);
+
+  const deleteTimeEntry = async () => {
+    if (!deleteTimeEntryId) return;
+    const { error } = await supabase.from("time_entries").delete().eq("id", deleteTimeEntryId);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Deleted", description: "Time entry removed." });
+      fetchData();
+    }
+    setDeleteTimeEntryId(null);
+  };
+
   // Roster state
   interface RosterUser {
     id: string;
