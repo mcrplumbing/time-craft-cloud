@@ -29,6 +29,7 @@ const Dashboard = () => {
       .from("work_orders")
       .select("id, status")
       .eq("user_id", user.id)
+      .is("deleted_at", null)
       .then(({ data }) => {
         if (data) {
           setStats({
@@ -44,6 +45,7 @@ const Dashboard = () => {
       .from("work_orders")
       .select("*")
       .eq("user_id", user.id)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(5)
       .then(({ data }) => setRecentOrders(data || []));

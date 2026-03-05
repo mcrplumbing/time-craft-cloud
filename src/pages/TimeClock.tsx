@@ -30,6 +30,7 @@ const TimeClock = () => {
       .from("time_entries")
       .select("*")
       .eq("user_id", user.id)
+      .is("deleted_at", null)
       .order("clock_in", { ascending: false })
       .limit(20);
     setEntries(data || []);
@@ -159,11 +160,14 @@ const TimeClock = () => {
 
   const deleteEntry = async () => {
     if (!deleteTarget) return;
-    const { error } = await supabase.from("time_entries").delete().eq("id", deleteTarget);
+    const { error } = await supabase
+      .from("time_entries")
+      .update({ deleted_at: new Date().toISOString() } as any)
+      .eq("id", deleteTarget);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Deleted", description: "Time entry removed." });
+      toast({ title: "Moved to Trash", description: "Time entry moved to trash." });
       fetchEntries();
     }
     setDeleteTarget(null);

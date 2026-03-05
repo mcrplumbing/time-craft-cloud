@@ -12,6 +12,7 @@ import TimeClock from "@/pages/TimeClock";
 import WorkOrders from "@/pages/WorkOrders";
 import WorkOrderDetail from "@/pages/WorkOrderDetail";
 import AdminReports from "@/pages/AdminReports";
+import Trash from "@/pages/Trash";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
@@ -38,6 +39,7 @@ const ProtectedRoutes = () => {
         <Route path="/work-orders" element={<WorkOrders />} />
         <Route path="/work-orders/:id" element={<WorkOrderDetail />} />
         <Route path="/admin" element={<AdminReports />} />
+        <Route path="/trash" element={<Trash />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
