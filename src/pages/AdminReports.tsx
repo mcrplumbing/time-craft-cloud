@@ -608,6 +608,20 @@ const AdminReports = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete time entry confirmation */}
+      <AlertDialog open={!!deleteTimeEntryId} onOpenChange={(open) => !open && setDeleteTimeEntryId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display">Delete Time Entry?</AlertDialogTitle>
+            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteTimeEntry} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
