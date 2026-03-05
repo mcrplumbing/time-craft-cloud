@@ -284,11 +284,9 @@ const TimeClock = () => {
                     <span className={`text-sm font-body font-semibold ${!entry.clock_out ? "text-accent" : "text-foreground"}`}>
                       {formatDuration(entry.clock_in, entry.clock_out, entry.break_start, entry.break_end)}
                     </span>
-                    {isAdmin && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteTarget(entry.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteTarget(entry.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               ))}
