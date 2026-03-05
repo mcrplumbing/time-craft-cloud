@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfWeek, endOfWeek, addWeeks, differenceInMinutes } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, KeyRound, Pencil, Printer, Shield, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, KeyRound, Pencil, Printer, Shield, Trash2, Users } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import LocationBadge from "@/components/LocationBadge";
 
 interface TimeEntry {
@@ -72,6 +73,21 @@ const AdminReports = () => {
   const [editBreakEnd, setEditBreakEnd] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Delete time entry state
+  const [deleteTimeEntryId, setDeleteTimeEntryId] = useState<string | null>(null);
+
+  const deleteTimeEntry = async () => {
+    if (!deleteTimeEntryId) return;
+    const { error } = await supabase.from("time_entries").delete().eq("id", deleteTimeEntryId);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Deleted", description: "Time entry removed." });
+      fetchData();
+    }
+    setDeleteTimeEntryId(null);
+  };
 
   // Roster state
   interface RosterUser {
@@ -373,9 +389,14 @@ const AdminReports = () => {
                                   </div>
                                 </TableCell>
                                 <TableCell className="no-print">
-                                  <Button variant="ghost" size="icon" onClick={() => openEdit(entry)}>
-                                    <Pencil className="h-3.5 w-3.5" />
-                                  </Button>
+                                  <div className="flex gap-0.5">
+                                    <Button variant="ghost" size="icon" onClick={() => openEdit(entry)} title="Edit entry">
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteTimeEntryId(entry.id)} title="Delete entry">
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             );
@@ -587,6 +608,20 @@ const AdminReports = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete time entry confirmation */}
+      <AlertDialog open={!!deleteTimeEntryId} onOpenChange={(open) => !open && setDeleteTimeEntryId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display">Delete Time Entry?</AlertDialogTitle>
+            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteTimeEntry} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
