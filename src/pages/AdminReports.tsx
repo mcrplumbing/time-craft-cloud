@@ -389,9 +389,14 @@ const AdminReports = () => {
                                   </div>
                                 </TableCell>
                                 <TableCell className="no-print">
-                                  <Button variant="ghost" size="icon" onClick={() => openEdit(entry)}>
-                                    <Pencil className="h-3.5 w-3.5" />
-                                  </Button>
+                                  <div className="flex gap-0.5">
+                                    <Button variant="ghost" size="icon" onClick={() => openEdit(entry)} title="Edit entry">
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteTimeEntryId(entry.id)} title="Delete entry">
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             );
