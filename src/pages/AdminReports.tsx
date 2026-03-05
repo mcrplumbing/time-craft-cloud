@@ -79,11 +79,14 @@ const AdminReports = () => {
 
   const deleteTimeEntry = async () => {
     if (!deleteTimeEntryId) return;
-    const { error } = await supabase.from("time_entries").delete().eq("id", deleteTimeEntryId);
+    const { error } = await supabase
+      .from("time_entries")
+      .update({ deleted_at: new Date().toISOString() } as any)
+      .eq("id", deleteTimeEntryId);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Deleted", description: "Time entry removed." });
+      toast({ title: "Moved to Trash", description: "Time entry moved to trash. You can restore it within 30 days." });
       fetchData();
     }
     setDeleteTimeEntryId(null);
@@ -117,6 +120,7 @@ const AdminReports = () => {
       supabase
         .from("time_entries")
         .select("*")
+        .is("deleted_at", null)
         .gte("clock_in", weekStart.toISOString())
         .lte("clock_in", weekEnd.toISOString())
         .order("clock_in", { ascending: true }),
@@ -124,6 +128,7 @@ const AdminReports = () => {
       supabase
         .from("work_orders")
         .select("*")
+        .is("deleted_at", null)
         .gte("created_at", weekStart.toISOString())
         .lte("created_at", weekEnd.toISOString())
         .order("created_at", { ascending: false }),
@@ -614,7 +619,7 @@ const AdminReports = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="font-display">Delete Time Entry?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+            <AlertDialogDescription>This entry will be moved to trash. You can restore it within 30 days.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>

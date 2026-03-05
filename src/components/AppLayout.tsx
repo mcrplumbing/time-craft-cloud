@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { Clock, FileText, LayoutDashboard, LogOut, Shield } from "lucide-react";
+import { Clock, FileText, LayoutDashboard, LogOut, Shield, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
@@ -56,22 +56,26 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
                 </Link>
               );
             })}
-            {isAdmin && (() => {
-              const active = location.pathname === "/admin";
+            {isAdmin && [
+              { to: "/admin", label: "Reports", icon: Shield },
+              { to: "/trash", label: "Trash", icon: Trash2 },
+            ].map(({ to, label, icon: Icon }) => {
+              const active = location.pathname === to;
               return (
                 <Link
-                  to="/admin"
+                  key={to}
+                  to={to}
                   className={`flex-1 md:flex-none flex flex-col md:flex-row items-center md:gap-3 py-2 md:py-2.5 md:px-3 rounded-md text-xs md:text-sm font-body transition-colors ${
                     active
                       ? "text-accent bg-accent/10 font-semibold"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
-                  <Shield className="h-5 w-5 md:h-4 md:w-4" />
-                  <span>Reports</span>
+                  <Icon className="h-5 w-5 md:h-4 md:w-4" />
+                  <span>{label}</span>
                 </Link>
               );
-            })()}
+            })}
           </div>
         </nav>
 
