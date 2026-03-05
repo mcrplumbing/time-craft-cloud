@@ -36,6 +36,7 @@ const WorkOrders = () => {
     const { data } = await supabase
       .from("work_orders")
       .select("*")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
     setOrders(data || []);
   };
@@ -152,11 +153,14 @@ const WorkOrders = () => {
   };
 
   const deleteOrder = async (orderId: string) => {
-    const { error } = await supabase.from("work_orders").delete().eq("id", orderId);
+    const { error } = await supabase
+      .from("work_orders")
+      .update({ deleted_at: new Date().toISOString() } as any)
+      .eq("id", orderId);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Work Order Deleted" });
+      toast({ title: "Moved to Trash", description: "Work order moved to trash. Restore within 30 days." });
       setDeleteTarget(null);
       fetchOrders();
     }
