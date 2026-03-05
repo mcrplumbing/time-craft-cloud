@@ -47,7 +47,7 @@ const WorkOrderDetail = () => {
             Work Order #{order.job_number || order.order_number}
           </h1>
         </div>
-        <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2">
+        <Button variant="outline" size="sm" onClick={() => { const prev = document.title; document.title = `Work-Order-${order.job_number || order.order_number}.pdf`; window.print(); document.title = prev; }} className="gap-2">
           <Printer className="h-4 w-4" /> Print
         </Button>
       </div>
