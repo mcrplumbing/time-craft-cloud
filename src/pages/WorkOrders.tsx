@@ -333,7 +333,7 @@ const WorkOrders = () => {
                   <div>
                     <p className="font-body font-semibold">#{order.job_number || order.order_number} — {order.title || "Untitled"}</p>
                     <p className="text-sm text-muted-foreground font-body">{order.customer_name}</p>
-                    <p className="text-xs text-muted-foreground font-body">{format(new Date(order.created_at), "MMM d, yyyy")}</p>
+                    <p className="text-xs text-muted-foreground font-body">{order.job_date ? format(new Date(order.job_date + "T00:00:00"), "MMM d, yyyy") : format(new Date(order.created_at), "MMM d, yyyy")}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
