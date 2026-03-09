@@ -336,7 +336,13 @@ const AdminReports = () => {
                 <p className="text-sm text-muted-foreground font-body">No time entries this week.</p>
               ) : (
                 <div className="space-y-6">
-                  {Object.entries(userTimeMap).map(([userId, { entries, totalMins }]) => (
+                  {Object.entries(userTimeMap)
+                    .sort(([a], [b]) => {
+                      const nameA = getName(a).trim().split(/\s+/).pop()?.toLowerCase() || "";
+                      const nameB = getName(b).trim().split(/\s+/).pop()?.toLowerCase() || "";
+                      return nameA.localeCompare(nameB);
+                    })
+                    .map(([userId, { entries, totalMins }]) => (
                     <div key={userId}>
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-display font-semibold text-base">{getName(userId)}</h3>
