@@ -10,12 +10,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
-import { Plus, FileText, Pencil, Trash2 } from "lucide-react";
+import { Plus, FileText, Pencil, Trash2, CalendarIcon } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { queueAction, isOnline } from "@/lib/offlineQueue";
 
 const WorkOrders = () => {
@@ -26,8 +29,8 @@ const WorkOrders = () => {
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editOrder, setEditOrder] = useState<any>(null);
-  const [form, setForm] = useState({ title: "", customer_name: "", customer_address: "", description: "", job_number: "" });
-  const [editForm, setEditForm] = useState({ title: "", customer_name: "", customer_address: "", description: "", job_number: "" });
+  const [form, setForm] = useState({ title: "", customer_name: "", customer_address: "", description: "", job_number: "", job_date: new Date() as Date | undefined });
+  const [editForm, setEditForm] = useState({ title: "", customer_name: "", customer_address: "", description: "", job_number: "", job_date: new Date() as Date | undefined });
   const [loading, setLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string | number } | null>(null);
 
@@ -60,6 +63,8 @@ const WorkOrders = () => {
       }
     }
 
+    const jobDateStr = form.job_date ? format(form.job_date, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd");
+
     if (!isOnline()) {
       await queueAction({
         table: "work_orders",
@@ -71,10 +76,11 @@ const WorkOrders = () => {
           customer_address: form.customer_address,
           description: form.description,
           job_number: finalJobNumber,
+          job_date: jobDateStr,
         },
       });
       toast({ title: "Work Order Saved Offline", description: "Will sync when you're back online." });
-      setForm({ title: "", customer_name: "", customer_address: "", description: "", job_number: "" });
+      setForm({ title: "", customer_name: "", customer_address: "", description: "", job_number: "", job_date: new Date() });
       setOpen(false);
     } else {
       const { error } = await supabase.from("work_orders").insert({
@@ -84,12 +90,13 @@ const WorkOrders = () => {
         customer_address: form.customer_address,
         description: form.description,
         job_number: finalJobNumber,
-      });
+        job_date: jobDateStr,
+      } as any);
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
         toast({ title: "Work Order Created" });
-        setForm({ title: "", customer_name: "", customer_address: "", description: "", job_number: "" });
+        setForm({ title: "", customer_name: "", customer_address: "", description: "", job_number: "", job_date: new Date() });
         setOpen(false);
         fetchOrders();
       }
@@ -118,6 +125,7 @@ const WorkOrders = () => {
       customer_address: order.customer_address || "",
       description: order.description || "",
       job_number: order.job_number || "",
+      job_date: order.job_date ? new Date(order.job_date + "T00:00:00") : new Date(),
     });
     setEditOpen(true);
   };
@@ -132,7 +140,8 @@ const WorkOrders = () => {
       customer_address: editForm.customer_address,
       description: editForm.description,
       job_number: editForm.job_number,
-    }).eq("id", editOrder.id);
+      job_date: editForm.job_date ? format(editForm.job_date, "yyyy-MM-dd") : null,
+    } as any).eq("id", editOrder.id);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
@@ -209,6 +218,20 @@ const WorkOrders = () => {
                 <Input value={form.customer_address} onChange={(e) => setForm({ ...form, customer_address: e.target.value })} placeholder="Address (optional)" />
               </div>
               <div className="space-y-2">
+                <Label>Job Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.job_date && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {form.job_date ? format(form.job_date, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={form.job_date} onSelect={(d) => setForm({ ...form, job_date: d })} initialFocus className={cn("p-3 pointer-events-auto")} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
                 <Label>Description</Label>
                 <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Job description" rows={3} />
               </div>
@@ -242,6 +265,20 @@ const WorkOrders = () => {
             <div className="space-y-2">
               <Label>Customer Address</Label>
               <Input value={editForm.customer_address} onChange={(e) => setEditForm({ ...editForm, customer_address: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Job Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !editForm.job_date && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {editForm.job_date ? format(editForm.job_date, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={editForm.job_date} onSelect={(d) => setEditForm({ ...editForm, job_date: d })} initialFocus className={cn("p-3 pointer-events-auto")} />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label>Description</Label>
@@ -296,7 +333,7 @@ const WorkOrders = () => {
                   <div>
                     <p className="font-body font-semibold">#{order.job_number || order.order_number} — {order.title || "Untitled"}</p>
                     <p className="text-sm text-muted-foreground font-body">{order.customer_name}</p>
-                    <p className="text-xs text-muted-foreground font-body">{format(new Date(order.created_at), "MMM d, yyyy")}</p>
+                    <p className="text-xs text-muted-foreground font-body">{order.job_date ? format(new Date(order.job_date + "T00:00:00"), "MMM d, yyyy") : format(new Date(order.created_at), "MMM d, yyyy")}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button

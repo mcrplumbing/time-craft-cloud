@@ -1,0 +1,1 @@
+ALTER TABLE public.work_orders ADD COLUMN job_date date DEFAULT CURRENT_DATE;
