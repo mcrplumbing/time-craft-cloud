@@ -63,6 +63,8 @@ const WorkOrders = () => {
       }
     }
 
+    const jobDateStr = form.job_date ? format(form.job_date, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd");
+
     if (!isOnline()) {
       await queueAction({
         table: "work_orders",
@@ -74,10 +76,11 @@ const WorkOrders = () => {
           customer_address: form.customer_address,
           description: form.description,
           job_number: finalJobNumber,
+          job_date: jobDateStr,
         },
       });
       toast({ title: "Work Order Saved Offline", description: "Will sync when you're back online." });
-      setForm({ title: "", customer_name: "", customer_address: "", description: "", job_number: "" });
+      setForm({ title: "", customer_name: "", customer_address: "", description: "", job_number: "", job_date: new Date() });
       setOpen(false);
     } else {
       const { error } = await supabase.from("work_orders").insert({
