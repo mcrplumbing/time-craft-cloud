@@ -197,6 +197,7 @@ export type Database = {
           deleted_at: string | null
           description: string | null
           id: string
+          job_date: string | null
           job_number: string
           order_number: number
           status: string
@@ -211,6 +212,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           id?: string
+          job_date?: string | null
           job_number?: string
           order_number?: number
           status?: string
@@ -225,6 +227,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           id?: string
+          job_date?: string | null
           job_number?: string
           order_number?: number
           status?: string
