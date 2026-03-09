@@ -218,6 +218,20 @@ const WorkOrders = () => {
                 <Input value={form.customer_address} onChange={(e) => setForm({ ...form, customer_address: e.target.value })} placeholder="Address (optional)" />
               </div>
               <div className="space-y-2">
+                <Label>Job Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.job_date && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {form.job_date ? format(form.job_date, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={form.job_date} onSelect={(d) => setForm({ ...form, job_date: d })} initialFocus className={cn("p-3 pointer-events-auto")} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
                 <Label>Description</Label>
                 <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Job description" rows={3} />
               </div>
