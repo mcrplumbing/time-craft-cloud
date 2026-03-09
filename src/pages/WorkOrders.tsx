@@ -90,12 +90,13 @@ const WorkOrders = () => {
         customer_address: form.customer_address,
         description: form.description,
         job_number: finalJobNumber,
-      });
+        job_date: jobDateStr,
+      } as any);
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
         toast({ title: "Work Order Created" });
-        setForm({ title: "", customer_name: "", customer_address: "", description: "", job_number: "" });
+        setForm({ title: "", customer_name: "", customer_address: "", description: "", job_number: "", job_date: new Date() });
         setOpen(false);
         fetchOrders();
       }
