@@ -140,7 +140,8 @@ const WorkOrders = () => {
       customer_address: editForm.customer_address,
       description: editForm.description,
       job_number: editForm.job_number,
-    }).eq("id", editOrder.id);
+      job_date: editForm.job_date ? format(editForm.job_date, "yyyy-MM-dd") : null,
+    } as any).eq("id", editOrder.id);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
