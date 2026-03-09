@@ -125,6 +125,7 @@ const WorkOrders = () => {
       customer_address: order.customer_address || "",
       description: order.description || "",
       job_number: order.job_number || "",
+      job_date: order.job_date ? new Date(order.job_date + "T00:00:00") : new Date(),
     });
     setEditOpen(true);
   };
