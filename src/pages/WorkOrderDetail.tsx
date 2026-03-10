@@ -74,6 +74,8 @@ const WorkOrderDetail = () => {
                     <SelectItem value="completed">Completed</SelectItem>
                   </SelectContent>
                 </Select>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div>
