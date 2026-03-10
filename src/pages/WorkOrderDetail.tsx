@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +12,7 @@ import { ArrowLeft, Printer } from "lucide-react";
 const WorkOrderDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
   const [order, setOrder] = useState<any>(null);
 
@@ -65,15 +67,21 @@ const WorkOrderDetail = () => {
             <div className="flex justify-between items-start">
               <p className="font-display font-bold text-lg">{order.title || "Untitled"}</p>
               <div className="no-print shrink-0">
-                <Select value={order.status} onValueChange={updateStatus}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
+                {isAdmin ? (
+                  <Select value={order.status} onValueChange={updateStatus}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <span className={`text-xs font-body px-2 py-1 rounded-full ${order.status === "completed" ? "bg-success/10 text-success" : "bg-accent/10 text-accent"}`}>
+                    {order.status}
+                  </span>
+                )}
               </div>
             </div>
             <div>
