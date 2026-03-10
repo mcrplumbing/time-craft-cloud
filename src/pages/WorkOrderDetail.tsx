@@ -70,10 +70,8 @@ const WorkOrderDetail = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="invoiced">Invoiced</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
