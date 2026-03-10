@@ -316,8 +316,8 @@ const WorkOrders = () => {
       </AlertDialog>
 
       {(() => {
-        const activeOrders = orders.filter((o) => o.status !== "completed" && o.status !== "invoiced");
-        const completedOrders = orders.filter((o) => o.status === "completed" || o.status === "invoiced");
+        const activeOrders = orders.filter((o) => o.status !== "completed");
+        const completedOrders = orders.filter((o) => o.status === "completed");
 
         const renderOrderList = (list: any[], emptyMsg: string) =>
           list.length === 0 ? (
