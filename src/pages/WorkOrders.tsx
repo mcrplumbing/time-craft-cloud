@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -317,54 +318,64 @@ const WorkOrders = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {orders.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 flex flex-col items-center gap-3">
-            <FileText className="h-12 w-12 text-muted-foreground" />
-            <p className="text-muted-foreground font-body">No work orders yet. Create your first one!</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-3">
-          {orders.map((order) => (
-            <Link key={order.id} to={`/work-orders/${order.id}`}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="flex items-center justify-between py-4">
-                  <div>
-                    <p className="font-body font-semibold">#{order.job_number || order.order_number} — {order.title || "Untitled"}</p>
-                    <p className="text-sm text-muted-foreground font-body">{order.customer_name}</p>
-                    <p className="text-xs text-muted-foreground font-body">{order.job_date ? format(new Date(order.job_date + "T00:00:00"), "MMM d, yyyy") : format(new Date(order.created_at), "MMM d, yyyy")}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => openEdit(order, e)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => openDeleteDialog(order, e)}
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                        aria-label={`Delete work order ${order.job_number || order.order_number}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <span className={`text-xs font-body px-2 py-1 rounded-full ${statusStyle(order.status)}`}>
-                      {order.status.replace("_", " ")}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
+      {(() => {
+        const activeOrders = orders.filter((o) => o.status !== "completed" && o.status !== "invoiced");
+        const completedOrders = orders.filter((o) => o.status === "completed" || o.status === "invoiced");
+
+        const renderOrderList = (list: any[], emptyMsg: string) =>
+          list.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 flex flex-col items-center gap-3">
+                <FileText className="h-12 w-12 text-muted-foreground" />
+                <p className="text-muted-foreground font-body">{emptyMsg}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-3">
+              {list.map((order) => (
+                <Link key={order.id} to={`/work-orders/${order.id}`}>
+                  <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                    <CardContent className="flex items-center justify-between py-4">
+                      <div>
+                        <p className="font-body font-semibold">#{order.job_number || order.order_number} — {order.title || "Untitled"}</p>
+                        <p className="text-sm text-muted-foreground font-body">{order.customer_name}</p>
+                        <p className="text-xs text-muted-foreground font-body">{order.job_date ? format(new Date(order.job_date + "T00:00:00"), "MMM d, yyyy") : format(new Date(order.created_at), "MMM d, yyyy")}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="sm" onClick={(e) => openEdit(order, e)} className="h-8 w-8 p-0">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {isAdmin && (
+                          <Button variant="ghost" size="sm" onClick={(e) => openDeleteDialog(order, e)} className="h-8 w-8 p-0 text-destructive hover:text-destructive" aria-label={`Delete work order ${order.job_number || order.order_number}`}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <span className={`text-xs font-body px-2 py-1 rounded-full ${statusStyle(order.status)}`}>
+                          {order.status.replace("_", " ")}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          );
+
+        return (
+          <Tabs defaultValue="active" className="w-full">
+            <TabsList className="w-full">
+              <TabsTrigger value="active" className="flex-1">Active ({activeOrders.length})</TabsTrigger>
+              <TabsTrigger value="completed" className="flex-1">Completed ({completedOrders.length})</TabsTrigger>
+            </TabsList>
+            <TabsContent value="active">
+              {renderOrderList(activeOrders, "No active work orders. Create your first one!")}
+            </TabsContent>
+            <TabsContent value="completed">
+              {renderOrderList(completedOrders, "No completed work orders yet.")}
+            </TabsContent>
+          </Tabs>
+        );
+      })()}
     </div>
   );
 };
