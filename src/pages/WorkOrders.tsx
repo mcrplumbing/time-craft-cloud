@@ -179,12 +179,9 @@ const WorkOrders = () => {
   const statusStyle = (status: string) => {
     switch (status) {
       case "completed":
-      case "invoiced":
         return "bg-success/10 text-success";
-      case "in_progress":
-        return "bg-accent/10 text-accent";
       default:
-        return "bg-muted text-muted-foreground";
+        return "bg-accent/10 text-accent";
     }
   };
 
@@ -319,8 +316,8 @@ const WorkOrders = () => {
       </AlertDialog>
 
       {(() => {
-        const activeOrders = orders.filter((o) => o.status !== "completed" && o.status !== "invoiced");
-        const completedOrders = orders.filter((o) => o.status === "completed" || o.status === "invoiced");
+        const activeOrders = orders.filter((o) => o.status !== "completed");
+        const completedOrders = orders.filter((o) => o.status === "completed");
 
         const renderOrderList = (list: any[], emptyMsg: string) =>
           list.length === 0 ? (
