@@ -12,6 +12,7 @@ import { ArrowLeft, Printer } from "lucide-react";
 const WorkOrderDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
   const [order, setOrder] = useState<any>(null);
 
