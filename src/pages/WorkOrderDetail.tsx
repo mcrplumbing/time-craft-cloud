@@ -67,15 +67,21 @@ const WorkOrderDetail = () => {
             <div className="flex justify-between items-start">
               <p className="font-display font-bold text-lg">{order.title || "Untitled"}</p>
               <div className="no-print shrink-0">
-                <Select value={order.status} onValueChange={updateStatus}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
+                {isAdmin ? (
+                  <Select value={order.status} onValueChange={updateStatus}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <span className={`text-xs font-body px-2 py-1 rounded-full ${order.status === "completed" ? "bg-success/10 text-success" : "bg-accent/10 text-accent"}`}>
+                    {order.status}
+                  </span>
+                )}
               </div>
             </div>
             <div>
