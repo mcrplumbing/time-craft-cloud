@@ -368,7 +368,17 @@ const WorkOrders = () => {
           );
 
         return (
-          <Tabs defaultValue="active" className="w-full">
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, job #, description..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Tabs defaultValue="active" className="w-full">
             <TabsList className="w-full">
               <TabsTrigger value="active" className="flex-1">Active ({activeOrders.length})</TabsTrigger>
               <TabsTrigger value="completed" className="flex-1">Completed ({completedOrders.length})</TabsTrigger>
