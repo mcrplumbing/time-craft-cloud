@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
-import { Plus, FileText, Pencil, Trash2, CalendarIcon } from "lucide-react";
+import { Plus, FileText, Pencil, Trash2, CalendarIcon, Search } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -34,6 +34,7 @@ const WorkOrders = () => {
   const [editForm, setEditForm] = useState({ title: "", customer_name: "", customer_address: "", description: "", job_number: "", job_date: new Date() as Date | undefined });
   const [loading, setLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string | number } | null>(null);
+  const [search, setSearch] = useState("");
 
   const fetchOrders = async () => {
     if (!user) return;
@@ -316,8 +317,16 @@ const WorkOrders = () => {
       </AlertDialog>
 
       {(() => {
-        const activeOrders = orders.filter((o) => o.status !== "completed");
-        const completedOrders = orders.filter((o) => o.status === "completed");
+        const q = search.toLowerCase().trim();
+        const filtered = q
+          ? orders.filter((o) =>
+              [o.job_number, o.title, o.customer_name, o.customer_address, o.description]
+                .filter(Boolean)
+                .some((field: string) => field.toLowerCase().includes(q))
+            )
+          : orders;
+        const activeOrders = filtered.filter((o) => o.status !== "completed");
+        const completedOrders = filtered.filter((o) => o.status === "completed");
 
         const renderOrderList = (list: any[], emptyMsg: string) =>
           list.length === 0 ? (
@@ -359,7 +368,17 @@ const WorkOrders = () => {
           );
 
         return (
-          <Tabs defaultValue="active" className="w-full">
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, job #, description..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Tabs defaultValue="active" className="w-full">
             <TabsList className="w-full">
               <TabsTrigger value="active" className="flex-1">Active ({activeOrders.length})</TabsTrigger>
               <TabsTrigger value="completed" className="flex-1">Completed ({completedOrders.length})</TabsTrigger>
@@ -370,7 +389,8 @@ const WorkOrders = () => {
             <TabsContent value="completed">
               {renderOrderList(completedOrders, "No completed work orders yet.")}
             </TabsContent>
-          </Tabs>
+           </Tabs>
+          </div>
         );
       })()}
     </div>
