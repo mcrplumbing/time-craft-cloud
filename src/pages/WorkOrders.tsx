@@ -34,6 +34,7 @@ const WorkOrders = () => {
   const [editForm, setEditForm] = useState({ title: "", customer_name: "", customer_address: "", description: "", job_number: "", job_date: new Date() as Date | undefined });
   const [loading, setLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string | number } | null>(null);
+  const [search, setSearch] = useState("");
 
   const fetchOrders = async () => {
     if (!user) return;
