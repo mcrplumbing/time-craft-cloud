@@ -317,8 +317,16 @@ const WorkOrders = () => {
       </AlertDialog>
 
       {(() => {
-        const activeOrders = orders.filter((o) => o.status !== "completed");
-        const completedOrders = orders.filter((o) => o.status === "completed");
+        const q = search.toLowerCase().trim();
+        const filtered = q
+          ? orders.filter((o) =>
+              [o.job_number, o.title, o.customer_name, o.customer_address, o.description]
+                .filter(Boolean)
+                .some((field: string) => field.toLowerCase().includes(q))
+            )
+          : orders;
+        const activeOrders = filtered.filter((o) => o.status !== "completed");
+        const completedOrders = filtered.filter((o) => o.status === "completed");
 
         const renderOrderList = (list: any[], emptyMsg: string) =>
           list.length === 0 ? (
