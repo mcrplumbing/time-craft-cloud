@@ -389,7 +389,8 @@ const WorkOrders = () => {
             <TabsContent value="completed">
               {renderOrderList(completedOrders, "No completed work orders yet.")}
             </TabsContent>
-          </Tabs>
+           </Tabs>
+          </div>
         );
       })()}
     </div>
