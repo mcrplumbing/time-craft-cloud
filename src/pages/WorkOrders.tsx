@@ -21,6 +21,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { queueAction, isOnline } from "@/lib/offlineQueue";
+import CompletedOrdersArchive from "@/components/CompletedOrdersArchive";
 
 const WorkOrders = () => {
   const { user } = useAuth();
@@ -387,7 +388,14 @@ const WorkOrders = () => {
               {renderOrderList(activeOrders, "No active work orders. Create your first one!")}
             </TabsContent>
             <TabsContent value="completed">
-              {renderOrderList(completedOrders, "No completed work orders yet.")}
+              <CompletedOrdersArchive
+                orders={orders.filter((o) => o.status === "completed")}
+                search={search}
+                isAdmin={isAdmin}
+                onEdit={openEdit}
+                onDelete={openDeleteDialog}
+                statusStyle={statusStyle}
+              />
             </TabsContent>
            </Tabs>
           </div>
