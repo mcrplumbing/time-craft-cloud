@@ -21,6 +21,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { queueAction, isOnline } from "@/lib/offlineQueue";
+import CompletedOrdersArchive from "@/components/CompletedOrdersArchive";
 
 const WorkOrders = () => {
   const { user } = useAuth();
