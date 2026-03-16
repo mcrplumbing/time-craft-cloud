@@ -43,7 +43,7 @@ const WorkOrders = () => {
       .from("work_orders")
       .select("*")
       .is("deleted_at", null)
-      .order("created_at", { ascending: false });
+      .order("job_date", { ascending: false });
     setOrders(data || []);
   };
 
