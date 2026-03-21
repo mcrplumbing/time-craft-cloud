@@ -173,22 +173,13 @@ const TimeClock = () => {
     setDeleteTarget(null);
   };
 
-  const formatDuration = (clockIn: string, clockOut: string | null, breakStart?: string | null, breakEnd?: string | null) => {
+  const formatDuration = (clockIn: string, clockOut: string | null, totalBreakMins?: number) => {
     if (!clockOut) return "Active";
     let mins = differenceInMinutes(new Date(clockOut), new Date(clockIn));
-    if (breakStart && breakEnd) {
-      mins -= differenceInMinutes(new Date(breakEnd), new Date(breakStart));
-    }
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
+    mins -= (totalBreakMins || 0);
+    const h = Math.floor(Math.max(0, mins) / 60);
+    const m = Math.max(0, mins) % 60;
     return `${h}h ${m}m`;
-  };
-
-  const formatBreak = (breakStart?: string | null, breakEnd?: string | null) => {
-    if (!breakStart) return null;
-    if (!breakEnd) return "On break";
-    const mins = differenceInMinutes(new Date(breakEnd), new Date(breakStart));
-    return `${mins}m break`;
   };
 
   return (
