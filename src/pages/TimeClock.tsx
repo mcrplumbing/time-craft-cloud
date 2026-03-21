@@ -258,9 +258,9 @@ const TimeClock = () => {
                     <p className="text-xs text-muted-foreground font-body">
                       {format(new Date(entry.clock_in), "h:mm a")} — {entry.clock_out ? format(new Date(entry.clock_out), "h:mm a") : "Active"}
                     </p>
-                    {entry.break_start && (
+                    {(entry.total_break_minutes > 0) && (
                       <p className="text-xs text-warning font-body mt-0.5">
-                        ☕ {formatBreak(entry.break_start, entry.break_end)}
+                        ☕ {entry.total_break_minutes}m break
                       </p>
                     )}
                     {entry.notes && <p className="text-xs text-muted-foreground mt-1 italic font-body">{entry.notes}</p>}
