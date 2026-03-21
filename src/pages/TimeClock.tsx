@@ -48,15 +48,14 @@ const TimeClock = () => {
     if (!activeEntry) { setElapsed(""); return; }
     const tick = () => {
       let mins = differenceInMinutes(new Date(), new Date(activeEntry.clock_in));
-      // Subtract break time if on break or break completed
-      if (activeEntry.break_start && activeEntry.break_end) {
-        mins -= differenceInMinutes(new Date(activeEntry.break_end), new Date(activeEntry.break_start));
-      } else if (activeEntry.break_start && !activeEntry.break_end) {
-        // Currently on break — freeze at break start
-        mins = differenceInMinutes(new Date(activeEntry.break_start), new Date(activeEntry.clock_in));
+      // Subtract accumulated break minutes
+      mins -= (activeEntry.total_break_minutes || 0);
+      // Subtract current active break if on break
+      if (activeEntry.break_start && !activeEntry.break_end) {
+        mins -= differenceInMinutes(new Date(), new Date(activeEntry.break_start));
       }
-      const h = Math.floor(mins / 60);
-      const m = mins % 60;
+      const h = Math.floor(Math.max(0, mins) / 60);
+      const m = Math.max(0, mins) % 60;
       setElapsed(`${h}h ${m}m`);
     };
     tick();
