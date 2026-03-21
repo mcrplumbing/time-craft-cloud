@@ -52,6 +52,7 @@ export type Database = {
           deleted_at: string | null
           id: string
           notes: string | null
+          total_break_minutes: number
           updated_at: string
           user_id: string
         }
@@ -68,6 +69,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           notes?: string | null
+          total_break_minutes?: number
           updated_at?: string
           user_id: string
         }
@@ -84,6 +86,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           notes?: string | null
+          total_break_minutes?: number
           updated_at?: string
           user_id?: string
         }
