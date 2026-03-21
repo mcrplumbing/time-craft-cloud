@@ -143,14 +143,16 @@ const TimeClock = () => {
   const endBreak = async () => {
     if (!user || !activeEntry) return;
     setLoading(true);
+    const breakMins = differenceInMinutes(new Date(), new Date(activeEntry.break_start));
+    const newTotal = (activeEntry.total_break_minutes || 0) + breakMins;
     const { error } = await supabase
       .from("time_entries")
-      .update({ break_end: new Date().toISOString() })
+      .update({ break_start: null, break_end: null, total_break_minutes: newTotal } as any)
       .eq("id", activeEntry.id);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Break Ended", description: "Back to work!" });
+      toast({ title: "Break Ended", description: `${breakMins}m break recorded. Back to work!` });
       fetchEntries();
     }
     setLoading(false);
