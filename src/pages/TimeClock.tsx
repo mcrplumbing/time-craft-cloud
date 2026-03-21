@@ -276,7 +276,7 @@ const TimeClock = () => {
                     )}
                   </div>
                   <span className={`text-sm font-body font-semibold ${!entry.clock_out ? "text-accent" : "text-foreground"}`}>
-                    {formatDuration(entry.clock_in, entry.clock_out, entry.break_start, entry.break_end)}
+                    {formatDuration(entry.clock_in, entry.clock_out, entry.total_break_minutes)}
                   </span>
                 </div>
               ))}
