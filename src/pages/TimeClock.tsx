@@ -64,7 +64,6 @@ const TimeClock = () => {
   }, [activeEntry]);
 
   const onBreak = activeEntry?.break_start && !activeEntry?.break_end;
-  const breakDone = activeEntry?.break_start && activeEntry?.break_end;
 
   const clockIn = async () => {
     if (!user) return;
