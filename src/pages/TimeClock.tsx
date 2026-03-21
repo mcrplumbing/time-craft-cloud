@@ -211,7 +211,7 @@ const TimeClock = () => {
                 className="max-w-sm"
               />
               <div className="flex gap-3 flex-wrap justify-center">
-                {!onBreak && !breakDone && (
+                {!onBreak && (
                   <Button onClick={startBreak} disabled={loading} variant="outline" size="lg" className="gap-2">
                     <Coffee className="h-5 w-5" /> Start Break
                   </Button>
