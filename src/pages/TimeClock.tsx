@@ -48,15 +48,14 @@ const TimeClock = () => {
     if (!activeEntry) { setElapsed(""); return; }
     const tick = () => {
       let mins = differenceInMinutes(new Date(), new Date(activeEntry.clock_in));
-      // Subtract break time if on break or break completed
-      if (activeEntry.break_start && activeEntry.break_end) {
-        mins -= differenceInMinutes(new Date(activeEntry.break_end), new Date(activeEntry.break_start));
-      } else if (activeEntry.break_start && !activeEntry.break_end) {
-        // Currently on break — freeze at break start
-        mins = differenceInMinutes(new Date(activeEntry.break_start), new Date(activeEntry.clock_in));
+      // Subtract accumulated break minutes
+      mins -= (activeEntry.total_break_minutes || 0);
+      // Subtract current active break if on break
+      if (activeEntry.break_start && !activeEntry.break_end) {
+        mins -= differenceInMinutes(new Date(), new Date(activeEntry.break_start));
       }
-      const h = Math.floor(mins / 60);
-      const m = mins % 60;
+      const h = Math.floor(Math.max(0, mins) / 60);
+      const m = Math.max(0, mins) % 60;
       setElapsed(`${h}h ${m}m`);
     };
     tick();
@@ -65,7 +64,6 @@ const TimeClock = () => {
   }, [activeEntry]);
 
   const onBreak = activeEntry?.break_start && !activeEntry?.break_end;
-  const breakDone = activeEntry?.break_start && activeEntry?.break_end;
 
   const clockIn = async () => {
     if (!user) return;
@@ -145,14 +143,16 @@ const TimeClock = () => {
   const endBreak = async () => {
     if (!user || !activeEntry) return;
     setLoading(true);
+    const breakMins = differenceInMinutes(new Date(), new Date(activeEntry.break_start));
+    const newTotal = (activeEntry.total_break_minutes || 0) + breakMins;
     const { error } = await supabase
       .from("time_entries")
-      .update({ break_end: new Date().toISOString() })
+      .update({ break_start: null, break_end: null, total_break_minutes: newTotal } as any)
       .eq("id", activeEntry.id);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Break Ended", description: "Back to work!" });
+      toast({ title: "Break Ended", description: `${breakMins}m break recorded. Back to work!` });
       fetchEntries();
     }
     setLoading(false);
@@ -173,22 +173,13 @@ const TimeClock = () => {
     setDeleteTarget(null);
   };
 
-  const formatDuration = (clockIn: string, clockOut: string | null, breakStart?: string | null, breakEnd?: string | null) => {
+  const formatDuration = (clockIn: string, clockOut: string | null, totalBreakMins?: number) => {
     if (!clockOut) return "Active";
     let mins = differenceInMinutes(new Date(clockOut), new Date(clockIn));
-    if (breakStart && breakEnd) {
-      mins -= differenceInMinutes(new Date(breakEnd), new Date(breakStart));
-    }
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
+    mins -= (totalBreakMins || 0);
+    const h = Math.floor(Math.max(0, mins) / 60);
+    const m = Math.max(0, mins) % 60;
     return `${h}h ${m}m`;
-  };
-
-  const formatBreak = (breakStart?: string | null, breakEnd?: string | null) => {
-    if (!breakStart) return null;
-    if (!breakEnd) return "On break";
-    const mins = differenceInMinutes(new Date(breakEnd), new Date(breakStart));
-    return `${mins}m break`;
   };
 
   return (
@@ -211,7 +202,7 @@ const TimeClock = () => {
               <p className="text-sm text-muted-foreground font-body">
                 Clocked in at {format(new Date(activeEntry.clock_in), "h:mm a")}
                 {onBreak && ` • Break since ${format(new Date(activeEntry.break_start), "h:mm a")}`}
-                {breakDone && ` • Break: ${formatBreak(activeEntry.break_start, activeEntry.break_end)}`}
+                {(activeEntry.total_break_minutes > 0) && ` • ${activeEntry.total_break_minutes}m total break`}
               </p>
               <Input
                 placeholder="Add notes about this shift..."
@@ -220,7 +211,7 @@ const TimeClock = () => {
                 className="max-w-sm"
               />
               <div className="flex gap-3 flex-wrap justify-center">
-                {!onBreak && !breakDone && (
+                {!onBreak && (
                   <Button onClick={startBreak} disabled={loading} variant="outline" size="lg" className="gap-2">
                     <Coffee className="h-5 w-5" /> Start Break
                   </Button>
@@ -267,9 +258,9 @@ const TimeClock = () => {
                     <p className="text-xs text-muted-foreground font-body">
                       {format(new Date(entry.clock_in), "h:mm a")} — {entry.clock_out ? format(new Date(entry.clock_out), "h:mm a") : "Active"}
                     </p>
-                    {entry.break_start && (
+                    {(entry.total_break_minutes > 0) && (
                       <p className="text-xs text-warning font-body mt-0.5">
-                        ☕ {formatBreak(entry.break_start, entry.break_end)}
+                        ☕ {entry.total_break_minutes}m break
                       </p>
                     )}
                     {entry.notes && <p className="text-xs text-muted-foreground mt-1 italic font-body">{entry.notes}</p>}
@@ -285,7 +276,7 @@ const TimeClock = () => {
                     )}
                   </div>
                   <span className={`text-sm font-body font-semibold ${!entry.clock_out ? "text-accent" : "text-foreground"}`}>
-                    {formatDuration(entry.clock_in, entry.clock_out, entry.break_start, entry.break_end)}
+                    {formatDuration(entry.clock_in, entry.clock_out, entry.total_break_minutes)}
                   </span>
                 </div>
               ))}

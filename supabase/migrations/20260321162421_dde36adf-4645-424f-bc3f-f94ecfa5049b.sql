@@ -1,0 +1,1 @@
+ALTER TABLE public.time_entries ADD COLUMN total_break_minutes integer NOT NULL DEFAULT 0;
