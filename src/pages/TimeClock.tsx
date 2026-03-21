@@ -202,7 +202,7 @@ const TimeClock = () => {
               <p className="text-sm text-muted-foreground font-body">
                 Clocked in at {format(new Date(activeEntry.clock_in), "h:mm a")}
                 {onBreak && ` • Break since ${format(new Date(activeEntry.break_start), "h:mm a")}`}
-                {breakDone && ` • Break: ${formatBreak(activeEntry.break_start, activeEntry.break_end)}`}
+                {(activeEntry.total_break_minutes > 0) && ` • ${activeEntry.total_break_minutes}m total break`}
               </p>
               <Input
                 placeholder="Add notes about this shift..."
