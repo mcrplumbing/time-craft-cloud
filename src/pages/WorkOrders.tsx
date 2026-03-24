@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils";
 import { queueAction, isOnline } from "@/lib/offlineQueue";
 import CompletedOrdersArchive from "@/components/CompletedOrdersArchive";
 
+const ITEMS_PER_PAGE = 20;
+
 const WorkOrders = () => {
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin();
@@ -36,6 +38,7 @@ const WorkOrders = () => {
   const [loading, setLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string | number } | null>(null);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchOrders = async () => {
     if (!user) return;
