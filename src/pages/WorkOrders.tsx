@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
-import { Plus, FileText, Pencil, Trash2, CalendarIcon, Search } from "lucide-react";
+import { Plus, FileText, Pencil, Trash2, CalendarIcon, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -22,6 +22,8 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { queueAction, isOnline } from "@/lib/offlineQueue";
 import CompletedOrdersArchive from "@/components/CompletedOrdersArchive";
+
+const ITEMS_PER_PAGE = 20;
 
 const WorkOrders = () => {
   const { user } = useAuth();
@@ -36,6 +38,7 @@ const WorkOrders = () => {
   const [loading, setLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string | number } | null>(null);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchOrders = async () => {
     if (!user) return;
@@ -329,6 +332,14 @@ const WorkOrders = () => {
         const activeOrders = filtered.filter((o) => o.status !== "completed");
         const completedOrders = filtered.filter((o) => o.status === "completed");
 
+        // Pagination for active orders
+        const totalPages = Math.max(1, Math.ceil(activeOrders.length / ITEMS_PER_PAGE));
+        const safePage = Math.min(currentPage, totalPages);
+        const paginatedActive = activeOrders.slice(
+          (safePage - 1) * ITEMS_PER_PAGE,
+          safePage * ITEMS_PER_PAGE
+        );
+
         const renderOrderList = (list: any[], emptyMsg: string) =>
           list.length === 0 ? (
             <Card>
@@ -375,7 +386,7 @@ const WorkOrders = () => {
               <Input
                 placeholder="Search by name, job #, description..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                 className="pl-9"
               />
             </div>
@@ -385,7 +396,32 @@ const WorkOrders = () => {
               <TabsTrigger value="completed" className="flex-1">Completed ({completedOrders.length})</TabsTrigger>
             </TabsList>
             <TabsContent value="active">
-              {renderOrderList(activeOrders, "No active work orders. Create your first one!")}
+              {renderOrderList(paginatedActive, "No active work orders. Create your first one!")}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={safePage <= 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground font-body px-3">
+                    Page {safePage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={safePage >= totalPages}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </TabsContent>
             <TabsContent value="completed">
               <CompletedOrdersArchive

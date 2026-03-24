@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import AppLayout from "@/components/AppLayout";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import Auth from "@/pages/Auth";
@@ -32,17 +33,19 @@ const ProtectedRoutes = () => {
   if (!user) return <Auth />;
 
   return (
-    <AppLayout>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/time-clock" element={<TimeClock />} />
-        <Route path="/work-orders" element={<WorkOrders />} />
-        <Route path="/work-orders/:id" element={<WorkOrderDetail />} />
-        <Route path="/admin" element={<AdminReports />} />
-        <Route path="/trash" element={<Trash />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </AppLayout>
+    <ErrorBoundary>
+      <AppLayout>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/time-clock" element={<TimeClock />} />
+          <Route path="/work-orders" element={<WorkOrders />} />
+          <Route path="/work-orders/:id" element={<WorkOrderDetail />} />
+          <Route path="/admin" element={<AdminReports />} />
+          <Route path="/trash" element={<Trash />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AppLayout>
+    </ErrorBoundary>
   );
 };
 
