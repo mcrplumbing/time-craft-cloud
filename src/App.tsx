@@ -33,17 +33,19 @@ const ProtectedRoutes = () => {
   if (!user) return <Auth />;
 
   return (
-    <AppLayout>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/time-clock" element={<TimeClock />} />
-        <Route path="/work-orders" element={<WorkOrders />} />
-        <Route path="/work-orders/:id" element={<WorkOrderDetail />} />
-        <Route path="/admin" element={<AdminReports />} />
-        <Route path="/trash" element={<Trash />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </AppLayout>
+    <ErrorBoundary>
+      <AppLayout>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/time-clock" element={<TimeClock />} />
+          <Route path="/work-orders" element={<WorkOrders />} />
+          <Route path="/work-orders/:id" element={<WorkOrderDetail />} />
+          <Route path="/admin" element={<AdminReports />} />
+          <Route path="/trash" element={<Trash />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AppLayout>
+    </ErrorBoundary>
   );
 };
 
