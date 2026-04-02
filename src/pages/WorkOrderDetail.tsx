@@ -14,8 +14,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { ArrowLeft, Printer, Pencil, CalendarIcon } from "lucide-react";
+import { ArrowLeft, Printer, Pencil, CalendarIcon, Download, Upload, RefreshCw, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { downloadWorkOrderPdf, getWorkOrderPdfBase64 } from "@/lib/generatePdf";
 
 const WorkOrderDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +28,8 @@ const WorkOrderDetail = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({ title: "", customer_name: "", customer_address: "", description: "", job_number: "", job_date: new Date() as Date | undefined });
   const [loading, setLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const fetchAll = async () => {
     if (!id || !user) return;
@@ -89,6 +92,109 @@ const WorkOrderDetail = () => {
       fetchAll();
     }
     setLoading(false);
+  };
+
+  // ── PDF Download ──
+  const handleDownloadPdf = () => {
+    if (!order) return;
+    downloadWorkOrderPdf({
+      job_number: order.job_number,
+      order_number: order.order_number,
+      title: order.title,
+      customer_name: order.customer_name,
+      customer_address: order.customer_address,
+      description: order.description,
+      job_date: order.job_date,
+      created_at: order.created_at,
+      status: order.status,
+      created_by_name: order.created_by_name,
+    });
+    toast({ title: "PDF Downloaded" });
+  };
+
+  // ── Dropbox Upload ──
+  const handleDropboxUpload = async () => {
+    if (!order) return;
+    setIsUploading(true);
+    try {
+      const { base64, filename } = getWorkOrderPdfBase64({
+        job_number: order.job_number,
+        order_number: order.order_number,
+        title: order.title,
+        customer_name: order.customer_name,
+        customer_address: order.customer_address,
+        description: order.description,
+        job_date: order.job_date,
+        created_at: order.created_at,
+        status: order.status,
+        created_by_name: order.created_by_name,
+      });
+
+      const { data, error } = await supabase.functions.invoke("upload-to-dropbox", {
+        body: {
+          pdf_base64: base64,
+          filename,
+          job_date: order.job_date || order.created_at?.split("T")[0],
+          job_number: order.job_number || String(order.order_number),
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({
+        title: "Uploaded to Dropbox",
+        description: `Saved to ${data.path}`,
+      });
+    } catch (err: any) {
+      console.error("Dropbox upload error:", err);
+      toast({
+        title: "Upload Failed",
+        description: err.message || "Failed to upload to Dropbox",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // ── Re-sync (Admin Only) ──
+  const handleResync = async () => {
+    if (!order || !id) return;
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("resync-work-order", {
+        body: { work_order_id: id },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data.errors && data.errors.length > 0) {
+        toast({
+          title: "Re-sync Partial",
+          description: data.errors.join("; "),
+          variant: "destructive",
+        });
+      } else {
+        const sheetsInfo = data.sheets_result
+          ? ` — ${data.sheets_result.entries_added} entries sent to Sheets`
+          : "";
+        toast({
+          title: "Re-sync Complete",
+          description: `Work order #${data.job_number} synced successfully${sheetsInfo}`,
+        });
+      }
+    } catch (err: any) {
+      console.error("Re-sync error:", err);
+      toast({
+        title: "Re-sync Failed",
+        description: err.message || "Failed to re-sync work order",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   if (!order) return <div className="p-8 text-center text-muted-foreground font-body">Loading...</div>;
@@ -155,6 +261,60 @@ const WorkOrderDetail = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Action buttons */}
+      <div className="no-print">
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex flex-wrap gap-2">
+              {/* PDF Download */}
+              <Button variant="outline" size="sm" onClick={handleDownloadPdf} className="gap-2">
+                <Download className="h-4 w-4" />
+                Download PDF
+              </Button>
+
+              {/* Dropbox Upload */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDropboxUpload}
+                disabled={isUploading}
+                className="gap-2"
+              >
+                {isUploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
+                {isUploading ? "Uploading..." : "Save to Dropbox"}
+              </Button>
+
+              {/* Re-sync — Admin only */}
+              {isAdmin && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleResync}
+                  disabled={isSyncing}
+                  className="gap-2"
+                >
+                  {isSyncing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                  {isSyncing ? "Syncing..." : "Re-sync to Timesheet"}
+                </Button>
+              )}
+            </div>
+            {isAdmin && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Re-sync re-parses labor data and pushes to Google Sheets. Use after editing a work order.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Edit dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
