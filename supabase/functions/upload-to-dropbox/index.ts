@@ -49,11 +49,16 @@ async function getDropboxAccessToken(): Promise<string> {
   return data.access_token;
 }
 
-function getDateFolder(dateStr: string): string {
+function getWeekEndingFolder(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");
-  const month = d.getMonth() + 1; // no leading zero
-  const day = String(d.getDate()).padStart(2, "0");
-  const year = String(d.getFullYear()).slice(-2);
+  // Find Sunday that ends the week containing this date (Mon=start, Sun=end)
+  const dayOfWeek = d.getDay(); // 0=Sun,1=Mon,...,6=Sat
+  const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+  const sunday = new Date(d);
+  sunday.setDate(d.getDate() + daysUntilSunday);
+  const month = sunday.getMonth() + 1; // no leading zero
+  const day = String(sunday.getDate()).padStart(2, "0");
+  const year = String(sunday.getFullYear()).slice(-2);
   return `${month}.${day}.${year}`;
 }
 
@@ -93,7 +98,7 @@ serve(async (req) => {
 
     // Build folder path
     const dateStr = job_date || new Date().toISOString().split("T")[0];
-    const dateFolder = getDateFolder(dateStr);
+    const dateFolder = getWeekEndingFolder(dateStr);
     const folderPath = `/MCR Work Orders/${dateFolder}`;
     const filePath = `${folderPath}/${filename}`;
 
