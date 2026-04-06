@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { ArrowLeft, Printer, Pencil, CalendarIcon, Download, Upload, RefreshCw, Loader2 } from "lucide-react";
+import { ArrowLeft, Printer, Pencil, CalendarIcon, Download, Upload, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { downloadWorkOrderPdf, getWorkOrderPdfBase64 } from "@/lib/generatePdf";
 
