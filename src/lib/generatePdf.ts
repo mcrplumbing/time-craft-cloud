@@ -166,7 +166,17 @@ export function generateWorkOrderPdf(order: WorkOrderPdfData): { doc: jsPDF; blo
     creator: "MCR Plumbing Tracker",
   });
 
-  const filename = `Work-Order-${order.job_number || order.order_number}.pdf`;
+  // Build filename: Work-Order-{job_number} {MM.DD.YY}.pdf
+  const jobId = order.job_number || String(order.order_number);
+  let dateSuffix = "";
+  if (order.job_date) {
+    const jd = new Date(order.job_date + "T00:00:00");
+    const mm = String(jd.getMonth() + 1).padStart(2, "0");
+    const dd = String(jd.getDate()).padStart(2, "0");
+    const yy = String(jd.getFullYear()).slice(-2);
+    dateSuffix = ` ${mm}.${dd}.${yy}`;
+  }
+  const filename = `Work-Order-${jobId}${dateSuffix}.pdf`;
   const blob = doc.output("blob");
   return { doc, blob, filename };
 }
