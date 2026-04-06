@@ -49,17 +49,33 @@ async function getDropboxAccessToken(): Promise<string> {
   return data.access_token;
 }
 
-function getWeekEndingFolder(dateStr: string): string {
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+/** Returns zero-padded MM.DD.YY */
+function formatDate(d: Date): string {
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${mm}.${dd}.${yy}`;
+}
+
+/** Returns the Sunday ending the week (Mon–Sun) that contains the given date */
+function getWeekEndingSunday(dateStr: string): Date {
   const d = new Date(dateStr + "T00:00:00");
-  // Find Sunday that ends the week containing this date (Mon=start, Sun=end)
-  const dayOfWeek = d.getDay(); // 0=Sun,1=Mon,...,6=Sat
+  const dayOfWeek = d.getDay(); // 0=Sun
   const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
   const sunday = new Date(d);
   sunday.setDate(d.getDate() + daysUntilSunday);
-  const month = sunday.getMonth() + 1; // no leading zero
-  const day = String(sunday.getDate()).padStart(2, "0");
-  const year = String(sunday.getFullYear()).slice(-2);
-  return `${month}.${day}.${year}`;
+  return sunday;
+}
+
+/** Builds the full Dropbox folder path for a job date */
+function buildDropboxPath(dateStr: string, filename: string): string {
+  const jobDate = new Date(dateStr + "T00:00:00");
+  const sunday = getWeekEndingSunday(dateStr);
+  const weekFolder = `Wk Ending ${formatDate(sunday)}`;
+  const dayFolder = `${DAY_NAMES[jobDate.getDay()]} ${formatDate(jobDate)}`;
+  return `/1MCR FILE CABINET/1 TIME KEEPING FILES/${weekFolder}/${dayFolder}/${filename}`;
 }
 
 serve(async (req) => {
