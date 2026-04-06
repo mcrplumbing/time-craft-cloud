@@ -49,28 +49,12 @@ async function getDropboxAccessToken(): Promise<string> {
   return data.access_token;
 }
 
-function getWeekFolder(dateStr: string): string {
+function getDateFolder(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");
-  const year = d.getFullYear();
-
-  // ISO week number
-  const jan1 = new Date(year, 0, 1);
-  const days = Math.floor((d.getTime() - jan1.getTime()) / 86400000);
-  const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
-
-  // Week start (Monday) and end (Sunday)
-  const dayOfWeek = d.getDay(); // 0=Sun
-  const monday = new Date(d);
-  monday.setDate(d.getDate() - ((dayOfWeek + 6) % 7));
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-
-  const fmtShort = (dt: Date) => {
-    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    return `${months[dt.getMonth()]} ${dt.getDate()}`;
-  };
-
-  return `${year}/Week ${String(weekNum).padStart(2, "0")} (${fmtShort(monday)} - ${fmtShort(sunday)})`;
+  const month = d.getMonth() + 1; // no leading zero
+  const day = String(d.getDate()).padStart(2, "0");
+  const year = String(d.getFullYear()).slice(-2);
+  return `${month}.${day}.${year}`;
 }
 
 serve(async (req) => {
