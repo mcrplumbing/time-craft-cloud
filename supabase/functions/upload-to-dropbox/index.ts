@@ -93,8 +93,8 @@ serve(async (req) => {
 
     // Build folder path
     const dateStr = job_date || new Date().toISOString().split("T")[0];
-    const weekFolder = getWeekFolder(dateStr);
-    const folderPath = `/MCR Work Orders/${weekFolder}/${dateStr}`;
+    const dateFolder = getDateFolder(dateStr);
+    const folderPath = `/MCR Work Orders/${dateFolder}`;
     const filePath = `${folderPath}/${filename}`;
 
     // Decode base64 to bytes
