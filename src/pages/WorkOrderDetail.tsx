@@ -29,7 +29,7 @@ const WorkOrderDetail = () => {
   const [editForm, setEditForm] = useState({ title: "", customer_name: "", customer_address: "", description: "", job_number: "", job_date: new Date() as Date | undefined });
   const [loading, setLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
+  
 
   const fetchAll = async () => {
     if (!id || !user) return;
@@ -158,44 +158,6 @@ const WorkOrderDetail = () => {
     }
   };
 
-  // ── Re-sync (Admin Only) ──
-  const handleResync = async () => {
-    if (!order || !id) return;
-    setIsSyncing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("resync-work-order", {
-        body: { work_order_id: id },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      if (data.errors && data.errors.length > 0) {
-        toast({
-          title: "Re-sync Partial",
-          description: data.errors.join("; "),
-          variant: "destructive",
-        });
-      } else {
-        const sheetsInfo = data.sheets_result
-          ? ` — ${data.sheets_result.entries_added} entries sent to Sheets`
-          : "";
-        toast({
-          title: "Re-sync Complete",
-          description: `Work order #${data.job_number} synced successfully${sheetsInfo}`,
-        });
-      }
-    } catch (err: any) {
-      console.error("Re-sync error:", err);
-      toast({
-        title: "Re-sync Failed",
-        description: err.message || "Failed to re-sync work order",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
   if (!order) return <div className="p-8 text-center text-muted-foreground font-body">Loading...</div>;
 
@@ -289,29 +251,6 @@ const WorkOrderDetail = () => {
                 {isUploading ? "Uploading..." : "Save to Dropbox"}
               </Button>
 
-              {/* Re-sync — Admin only */}
-              {isAdmin && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={handleResync}
-                  disabled={isSyncing}
-                  className="gap-2"
-                >
-                  {isSyncing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-4 w-4" />
-                  )}
-                  {isSyncing ? "Syncing..." : "Re-sync to Timesheet"}
-                </Button>
-              )}
-            </div>
-            {isAdmin && (
-              <p className="text-xs text-muted-foreground mt-2">
-                Re-sync re-parses labor data and pushes to Google Sheets. Use after editing a work order.
-              </p>
-            )}
           </CardContent>
         </Card>
       </div>
