@@ -250,7 +250,7 @@ const WorkOrderDetail = () => {
                 )}
                 {isUploading ? "Uploading..." : "Save to Dropbox"}
               </Button>
-
+            </div>
           </CardContent>
         </Card>
       </div>
