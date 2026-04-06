@@ -114,9 +114,7 @@ serve(async (req) => {
 
     // Build folder path
     const dateStr = job_date || new Date().toISOString().split("T")[0];
-    const dateFolder = getWeekEndingFolder(dateStr);
-    const folderPath = `/MCR Work Orders/${dateFolder}`;
-    const filePath = `${folderPath}/${filename}`;
+    const filePath = buildDropboxPath(dateStr, filename);
 
     // Decode base64 to bytes
     const binaryStr = atob(pdf_base64);
