@@ -9,7 +9,7 @@ const corsHeaders = {
 
 /**
  * Upload a work order PDF to Dropbox, auto-filing into:
- *   /MCR Work Orders/{YYYY}/Week {WW} ({Mon} - {Sun})/{YYYY-MM-DD}/Work-Order-{job_number}.pdf
+ *   /1MCR FILE CABINET/1 TIME KEEPING FILES/Wk Ending MM.DD.YY/DayName MM.DD.YY/Work-Order-{job_number}.pdf
  *
  * Expects JSON body:
  *   { pdf_base64: string, filename: string, job_date: string (YYYY-MM-DD), job_number: string }
