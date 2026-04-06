@@ -9,7 +9,7 @@ const corsHeaders = {
 
 /**
  * Upload a work order PDF to Dropbox, auto-filing into:
- *   /1MCR FILE CABINET/1 TIME KEEPING FILES/Wk Ending MM.DD.YY/DayName MM.DD.YY/Work-Order-{job_number}.pdf
+ *   /MCR Work Orders/{YYYY}/Week {WW} ({Mon} - {Sun})/{YYYY-MM-DD}/Work-Order-{job_number}.pdf
  *
  * Expects JSON body:
  *   { pdf_base64: string, filename: string, job_date: string (YYYY-MM-DD), job_number: string }
@@ -69,7 +69,7 @@ function getWeekEndingSunday(dateStr: string): Date {
   return sunday;
 }
 
-/** Builds the full Dropbox folder path for a job date */
+/** Builds the full Dropbox path for a job date */
 function buildDropboxPath(dateStr: string, filename: string): string {
   const jobDate = new Date(dateStr + "T00:00:00");
   const sunday = getWeekEndingSunday(dateStr);
