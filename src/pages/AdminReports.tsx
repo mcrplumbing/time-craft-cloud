@@ -689,6 +689,64 @@ const AdminReports = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create New Time Entry Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">New Time Entry</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-3">
+              <div>
+                <Label className="font-body text-sm">Employee</Label>
+                <Select value={newUserId} onValueChange={setNewUserId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select employee" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[...profiles]
+                      .sort((a, b) => {
+                        const la = (a.full_name || "").trim().split(/\s+/).pop()?.toLowerCase() || "";
+                        const lb = (b.full_name || "").trim().split(/\s+/).pop()?.toLowerCase() || "";
+                        return la.localeCompare(lb);
+                      })
+                      .map((p) => (
+                        <SelectItem key={p.user_id} value={p.user_id}>
+                          {p.full_name || "Unnamed"}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="font-body text-sm">Clock In</Label>
+                <Input type="datetime-local" value={newClockIn} onChange={(e) => setNewClockIn(e.target.value)} />
+              </div>
+              <div>
+                <Label className="font-body text-sm">Clock Out</Label>
+                <Input type="datetime-local" value={newClockOut} onChange={(e) => setNewClockOut(e.target.value)} />
+              </div>
+              <div>
+                <Label className="font-body text-sm">Break Start</Label>
+                <Input type="datetime-local" value={newBreakStart} onChange={(e) => setNewBreakStart(e.target.value)} />
+              </div>
+              <div>
+                <Label className="font-body text-sm">Break End</Label>
+                <Input type="datetime-local" value={newBreakEnd} onChange={(e) => setNewBreakEnd(e.target.value)} />
+              </div>
+              <div>
+                <Label className="font-body text-sm">Notes</Label>
+                <Input value={newNotes} onChange={(e) => setNewNotes(e.target.value)} placeholder="Shift notes..." />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button onClick={createEntry} disabled={creating}>{creating ? "Creating..." : "Create Entry"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
