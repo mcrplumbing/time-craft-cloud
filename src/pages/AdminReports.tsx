@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfWeek, endOfWeek, addWeeks, differenceInMinutes } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, KeyRound, Pencil, Printer, Shield, Trash2, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, KeyRound, Pencil, Plus, Printer, Shield, Trash2, Users } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import LocationBadge from "@/components/LocationBadge";
 
@@ -76,6 +76,57 @@ const AdminReports = () => {
 
   // Delete time entry state
   const [deleteTimeEntryId, setDeleteTimeEntryId] = useState<string | null>(null);
+
+  // Create new entry state
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newUserId, setNewUserId] = useState("");
+  const [newClockIn, setNewClockIn] = useState("");
+  const [newClockOut, setNewClockOut] = useState("");
+  const [newBreakStart, setNewBreakStart] = useState("");
+  const [newBreakEnd, setNewBreakEnd] = useState("");
+  const [newNotes, setNewNotes] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  const openCreate = () => {
+    setNewUserId("");
+    const now = new Date();
+    const offset = now.getTimezoneOffset();
+    const local = new Date(now.getTime() - offset * 60000).toISOString().slice(0, 16);
+    setNewClockIn(local);
+    setNewClockOut("");
+    setNewBreakStart("");
+    setNewBreakEnd("");
+    setNewNotes("");
+    setCreateOpen(true);
+  };
+
+  const createEntry = async () => {
+    if (!newUserId) {
+      toast({ title: "Select an employee", variant: "destructive" });
+      return;
+    }
+    if (!newClockIn) {
+      toast({ title: "Clock In is required", variant: "destructive" });
+      return;
+    }
+    setCreating(true);
+    const { error } = await supabase.from("time_entries").insert({
+      user_id: newUserId,
+      clock_in: new Date(newClockIn).toISOString(),
+      clock_out: newClockOut ? new Date(newClockOut).toISOString() : null,
+      break_start: newBreakStart ? new Date(newBreakStart).toISOString() : null,
+      break_end: newBreakEnd ? new Date(newBreakEnd).toISOString() : null,
+      notes: newNotes || null,
+    });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Created", description: "Time entry added." });
+      setCreateOpen(false);
+      fetchData();
+    }
+    setCreating(false);
+  };
 
   const deleteTimeEntry = async () => {
     if (!deleteTimeEntryId) return;
