@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfWeek, endOfWeek, addWeeks, differenceInMinutes } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, KeyRound, Pencil, Printer, Shield, Trash2, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, KeyRound, Pencil, Plus, Printer, Shield, Trash2, Users } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import LocationBadge from "@/components/LocationBadge";
 
@@ -76,6 +76,57 @@ const AdminReports = () => {
 
   // Delete time entry state
   const [deleteTimeEntryId, setDeleteTimeEntryId] = useState<string | null>(null);
+
+  // Create new entry state
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newUserId, setNewUserId] = useState("");
+  const [newClockIn, setNewClockIn] = useState("");
+  const [newClockOut, setNewClockOut] = useState("");
+  const [newBreakStart, setNewBreakStart] = useState("");
+  const [newBreakEnd, setNewBreakEnd] = useState("");
+  const [newNotes, setNewNotes] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  const openCreate = () => {
+    setNewUserId("");
+    const now = new Date();
+    const offset = now.getTimezoneOffset();
+    const local = new Date(now.getTime() - offset * 60000).toISOString().slice(0, 16);
+    setNewClockIn(local);
+    setNewClockOut("");
+    setNewBreakStart("");
+    setNewBreakEnd("");
+    setNewNotes("");
+    setCreateOpen(true);
+  };
+
+  const createEntry = async () => {
+    if (!newUserId) {
+      toast({ title: "Select an employee", variant: "destructive" });
+      return;
+    }
+    if (!newClockIn) {
+      toast({ title: "Clock In is required", variant: "destructive" });
+      return;
+    }
+    setCreating(true);
+    const { error } = await supabase.from("time_entries").insert({
+      user_id: newUserId,
+      clock_in: new Date(newClockIn).toISOString(),
+      clock_out: newClockOut ? new Date(newClockOut).toISOString() : null,
+      break_start: newBreakStart ? new Date(newBreakStart).toISOString() : null,
+      break_end: newBreakEnd ? new Date(newBreakEnd).toISOString() : null,
+      notes: newNotes || null,
+    });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Created", description: "Time entry added." });
+      setCreateOpen(false);
+      fetchData();
+    }
+    setCreating(false);
+  };
 
   const deleteTimeEntry = async () => {
     if (!deleteTimeEntryId) return;
@@ -317,9 +368,14 @@ const AdminReports = () => {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <Button variant="outline" size="sm" className="no-print gap-2" onClick={() => { const prev = document.title; document.title = "Admin-Report.pdf"; window.print(); document.title = prev; }}>
-          <Printer className="h-4 w-4" /> Print
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" className="no-print gap-2" onClick={openCreate}>
+            <Plus className="h-4 w-4" /> New Entry
+          </Button>
+          <Button variant="outline" size="sm" className="no-print gap-2" onClick={() => { const prev = document.title; document.title = "Admin-Report.pdf"; window.print(); document.title = prev; }}>
+            <Printer className="h-4 w-4" /> Print
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -633,6 +689,64 @@ const AdminReports = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create New Time Entry Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">New Time Entry</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-3">
+              <div>
+                <Label className="font-body text-sm">Employee</Label>
+                <Select value={newUserId} onValueChange={setNewUserId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select employee" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[...profiles]
+                      .sort((a, b) => {
+                        const la = (a.full_name || "").trim().split(/\s+/).pop()?.toLowerCase() || "";
+                        const lb = (b.full_name || "").trim().split(/\s+/).pop()?.toLowerCase() || "";
+                        return la.localeCompare(lb);
+                      })
+                      .map((p) => (
+                        <SelectItem key={p.user_id} value={p.user_id}>
+                          {p.full_name || "Unnamed"}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="font-body text-sm">Clock In</Label>
+                <Input type="datetime-local" value={newClockIn} onChange={(e) => setNewClockIn(e.target.value)} />
+              </div>
+              <div>
+                <Label className="font-body text-sm">Clock Out</Label>
+                <Input type="datetime-local" value={newClockOut} onChange={(e) => setNewClockOut(e.target.value)} />
+              </div>
+              <div>
+                <Label className="font-body text-sm">Break Start</Label>
+                <Input type="datetime-local" value={newBreakStart} onChange={(e) => setNewBreakStart(e.target.value)} />
+              </div>
+              <div>
+                <Label className="font-body text-sm">Break End</Label>
+                <Input type="datetime-local" value={newBreakEnd} onChange={(e) => setNewBreakEnd(e.target.value)} />
+              </div>
+              <div>
+                <Label className="font-body text-sm">Notes</Label>
+                <Input value={newNotes} onChange={(e) => setNewNotes(e.target.value)} placeholder="Shift notes..." />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button onClick={createEntry} disabled={creating}>{creating ? "Creating..." : "Create Entry"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
