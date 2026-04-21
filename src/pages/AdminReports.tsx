@@ -368,9 +368,14 @@ const AdminReports = () => {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <Button variant="outline" size="sm" className="no-print gap-2" onClick={() => { const prev = document.title; document.title = "Admin-Report.pdf"; window.print(); document.title = prev; }}>
-          <Printer className="h-4 w-4" /> Print
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" className="no-print gap-2" onClick={openCreate}>
+            <Plus className="h-4 w-4" /> New Entry
+          </Button>
+          <Button variant="outline" size="sm" className="no-print gap-2" onClick={() => { const prev = document.title; document.title = "Admin-Report.pdf"; window.print(); document.title = prev; }}>
+            <Printer className="h-4 w-4" /> Print
+          </Button>
+        </div>
       </div>
 
       {loading ? (
